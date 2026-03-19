@@ -1,12 +1,35 @@
-import { Text, View } from "react-native";
+import { View, Platform, Pressable, ActivityIndicator } from "react-native";
+import { Text } from "./ui/text";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React from "react";
+import React, { useState } from "react";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { useRouter } from "expo-router";
+import { ChevronLeft } from "lucide-react-native";
+import { useColorScheme } from "nativewind";
+import { Icon } from "./ui/icon";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+  Option
+} from "@/components/ui/select"
+
+
+const GENDER_OPTIONS = [
+    { value: "male", label: "Male" },
+    { value: "female", label: "Female" },
+    { value: "other", label: "Other" }
+] as const;
 
 
 const userRegister = z.object({
@@ -22,6 +45,10 @@ const userRegister = z.object({
 type UserRegister = z.infer<typeof userRegister>
 
 export default function Register() {
+    const router = useRouter();
+    const { colorScheme } = useColorScheme();
+    const [currentStep, setCurrentStep] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
 
     const userRegisterForm = useForm<UserRegister>({
         resolver: zodResolver(userRegister),
@@ -36,80 +63,307 @@ export default function Register() {
         }
     })
 
+    const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
+    const showDatePicker = () => {
+        setDatePickerVisibility(true);
+    };
+
+    const hideDatePicker = () => {
+        setDatePickerVisibility(false);
+    };
+
+    const handleConfirm = (date: Date, onChange: (value: string) => void) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+        onChange(formattedDate);
+        hideDatePicker();
+    };
+
+    const nextStep = async () => {
+        let fieldsToValidate: (keyof UserRegister)[] = [];
+        if (currentStep === 1) fieldsToValidate = ["name", "surname"];
+        else if (currentStep === 2) fieldsToValidate = ["email", "password"];
+        
+        const isValid = await userRegisterForm.trigger(fieldsToValidate);
+        if (isValid) {
+            setIsLoading(true);
+            setTimeout(() => {
+                setCurrentStep(prev => prev + 1);
+                setIsLoading(false);
+            }, 500);
+        }
+    };
+
+    const prevStep = () => {
+        setCurrentStep(prev => prev - 1);
+    };
+
     const onSubmit = async (data: UserRegister) => {
-        console.log(data);
+        setIsLoading(true);
+        console.log("onSubmit triggered with data:", data);
+        const hostIp = "192.168.0.242"; 
+        const baseUrl = Platform.OS === 'web' ? "http://localhost:8080" : `http://${hostIp}:8080`;
+        
         try {
-            const response = await fetch("http://localhost:8080/api/users/v1/register", {
+            const response = await fetch(`${baseUrl}/api/users/v1/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(data),
             });
+            
+            if (!response.ok) {
+                const errorData = await response.text();
+                alert(`Server error: ${errorData}`);
+                return;
+            }
+
             const result = await response.json();
-            console.log(result);
+            console.log("Success:", result);
+            router.replace("/home");
         } catch (error) {
-            console.log(error);
+            console.error("Network error:", error);
+            alert("Network error. Please check your connection.");
+        } finally {
+            setIsLoading(false);
         }
     }
 
     return (
         <Card className="w-full max-w-sm">
-            <CardHeader className="flex-row">
+            <CardHeader className="flex-row items-center gap-2">
+                {currentStep > 0 && (
+                    <Button variant="ghost" size="icon" onPress={prevStep} disabled={isLoading}>
+                        <Icon as={ChevronLeft} size={20} className="text-foreground" />
+                    </Button>
+                )}
                 <View className="flex-1 gap-1.5">
-                    <CardTitle>Subscribe to our newsletter</CardTitle>
-                    <CardDescription>Enter your details to receive updates and tips</CardDescription>
+                    <CardTitle>
+                        {currentStep === 0 ? "Welcome" : 
+                         currentStep === 1 ? "Personal Info" : 
+                         currentStep === 2 ? "Account Security" : "Additional Info"}
+                    </CardTitle>
+                    <CardDescription>
+                        {currentStep === 0 ? "Login or create a new account" : 
+                         currentStep === 1 ? "Enter your name and surname" : 
+                         currentStep === 2 ? "Provide your email and password" : "Final details for your profile"}
+                    </CardDescription>
                 </View>
             </CardHeader>
             <CardContent>
                 <View className="w-full justify-center gap-4">
-                    <form onSubmit={userRegisterForm.handleSubmit(onSubmit)}>
-                    <View className="gap-2">
-                        <Label htmlFor="name">Name</Label>
-                        <Input {...userRegisterForm.register("name")} aria-invalid={userRegisterForm.formState.errors.name ? true : false} aria-describedby={userRegisterForm.formState.errors.name ? "name-error" : undefined}/>
-                        {userRegisterForm.formState.errors.name && <Text id="name-error" className="text-red-500">{userRegisterForm.formState.errors.name.message}</Text>}
-                    </View>
-                    <View className="gap-2">
-                        <Label htmlFor="surname">Surname</Label>
-                        <Input {...userRegisterForm.register("surname")} aria-invalid={userRegisterForm.formState.errors.surname ? true : false} aria-describedby={userRegisterForm.formState.errors.surname ? "surname-error" : undefined}/>
-                        {userRegisterForm.formState.errors.surname && <Text id="surname-error" className="text-red-500">{userRegisterForm.formState.errors.surname.message}</Text>}
-                    </View>
-                    <View className="gap-2">
-                        <Label htmlFor="birthday">Birthday</Label>
-                        <Input {...userRegisterForm.register("birthday")} aria-invalid={userRegisterForm.formState.errors.birthday ? true : false} aria-describedby={userRegisterForm.formState.errors.birthday ? "birthday-error" : undefined}/>
-                        {userRegisterForm.formState.errors.birthday && <Text id="birthday-error" className="text-red-500">{userRegisterForm.formState.errors.birthday.message}</Text>}
-                    </View>
-                    <View className="gap-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input {...userRegisterForm.register("email")} aria-invalid={userRegisterForm.formState.errors.email ? true : false} aria-describedby={userRegisterForm.formState.errors.email ? "email-error" : undefined}/>
-                        {userRegisterForm.formState.errors.email && <Text id="email-error" className="text-red-500">{userRegisterForm.formState.errors.email.message}</Text>}
-                    </View>
-                    <View className="gap-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input {...userRegisterForm.register("password")} aria-invalid={userRegisterForm.formState.errors.password ? true : false} aria-describedby={userRegisterForm.formState.errors.password ? "password-error" : undefined}/>
-                        {userRegisterForm.formState.errors.password && <Text id="password-error" className="text-red-500">{userRegisterForm.formState.errors.password.message}</Text>}
-                    </View>
-                    <View className="gap-2">
-                        <Label htmlFor="gender">Gender</Label>
-                        <Input {...userRegisterForm.register("gender")} aria-invalid={userRegisterForm.formState.errors.gender ? true : false} aria-describedby={userRegisterForm.formState.errors.gender ? "gender-error" : undefined}/>
-                        {userRegisterForm.formState.errors.gender && <Text id="gender-error" className="text-red-500">{userRegisterForm.formState.errors.gender.message}</Text>}
-                    </View>
-                    <View className="gap-2">
-                        <Label htmlFor="phone">Phone</Label>
-                        <Input {...userRegisterForm.register("phone")} aria-invalid={userRegisterForm.formState.errors.phone ? true : false} aria-describedby={userRegisterForm.formState.errors.phone ? "phone-error" : undefined}/>
-                        {userRegisterForm.formState.errors.phone && <Text id="phone-error" className="text-red-500">{userRegisterForm.formState.errors.phone.message}</Text>}
-                    </View>
-                    </form>
+                    {currentStep === 0 && (
+                        <View className="gap-4 py-4">
+                            <Button className="w-full" onPress={() => setCurrentStep(1)}>
+                                <Text>Register</Text>
+                            </Button>
+                            <Button variant="outline" className="w-full">
+                                <Text>Login</Text>
+                            </Button>
+                        </View>
+                    )}
+
+                    {currentStep === 1 && (
+                        <View className="gap-4">
+                            <View className="gap-2">
+                                <Label>Name</Label>
+                                <Controller
+                                    control={userRegisterForm.control}
+                                    name="name"
+                                    render={({ field: { onChange, onBlur, value } }) => (
+                                        <Input
+                                            onBlur={onBlur}
+                                            onChangeText={onChange}
+                                            value={value}
+                                            placeholder="Enter your name"
+                                            editable={!isLoading}
+                                            aria-invalid={!!userRegisterForm.formState.errors.name}
+                                        />
+                                    )}
+                                />
+                                {userRegisterForm.formState.errors.name && <Text className="text-red-500 text-xs">{userRegisterForm.formState.errors.name.message}</Text>}
+                            </View>
+
+                            <View className="gap-2">
+                                <Label>Surname</Label>
+                                <Controller
+                                    control={userRegisterForm.control}
+                                    name="surname"
+                                    render={({ field: { onChange, onBlur, value } }) => (
+                                        <Input
+                                            onBlur={onBlur}
+                                            onChangeText={onChange}
+                                            value={value}
+                                            placeholder="Enter your surname"
+                                            editable={!isLoading}
+                                            aria-invalid={!!userRegisterForm.formState.errors.surname}
+                                        />
+                                    )}
+                                />
+                                {userRegisterForm.formState.errors.surname && <Text className="text-red-500 text-xs">{userRegisterForm.formState.errors.surname.message}</Text>}
+                            </View>
+                        </View>
+                    )}
+
+                    {currentStep === 2 && (
+                        <View className="gap-4">
+                            <View className="gap-2">
+                                <Label>Email</Label>
+                                <Controller
+                                    control={userRegisterForm.control}
+                                    name="email"
+                                    render={({ field: { onChange, onBlur, value } }) => (
+                                        <Input
+                                            onBlur={onBlur}
+                                            onChangeText={onChange}
+                                            value={value}
+                                            placeholder="email@example.com"
+                                            keyboardType="email-address"
+                                            autoCapitalize="none"
+                                            editable={!isLoading}
+                                            aria-invalid={!!userRegisterForm.formState.errors.email}
+                                        />
+                                    )}
+                                />
+                                {userRegisterForm.formState.errors.email && <Text className="text-red-500 text-xs">{userRegisterForm.formState.errors.email.message}</Text>}
+                            </View>
+
+                            <View className="gap-2">
+                                <Label>Password</Label>
+                                <Controller
+                                    control={userRegisterForm.control}
+                                    name="password"
+                                    render={({ field: { onChange, onBlur, value } }) => (
+                                        <Input
+                                            onBlur={onBlur}
+                                            onChangeText={onChange}
+                                            value={value}
+                                            placeholder="Min 6 characters"
+                                            secureTextEntry
+                                            editable={!isLoading}
+                                            aria-invalid={!!userRegisterForm.formState.errors.password}
+                                        />
+                                    )}
+                                />
+                                {userRegisterForm.formState.errors.password && <Text className="text-red-500 text-xs">{userRegisterForm.formState.errors.password.message}</Text>}
+                            </View>
+                        </View>
+                    )}
+
+                    {currentStep === 3 && (
+                        <View className="gap-4">
+                            <View className="gap-2">
+                                <Label>Birthday</Label>
+                                <Controller
+                                    control={userRegisterForm.control}
+                                    name="birthday"
+                                    render={({ field: { onChange, value } }) => (
+                                        <View>
+                                            <Pressable onPress={showDatePicker} disabled={isLoading}>
+                                                <View pointerEvents="none">
+                                                    <Input
+                                                        value={value}
+                                                        placeholder="YYYY-MM-DD"
+                                                        editable={false}
+                                                        aria-invalid={!!userRegisterForm.formState.errors.birthday}
+                                                    />
+                                                </View>
+                                            </Pressable>
+                                            <DateTimePickerModal
+                                                isVisible={isDatePickerVisible}
+                                                mode="date"
+                                                onConfirm={(date) => handleConfirm(date, onChange)}
+                                                onCancel={hideDatePicker}
+                                                maximumDate={new Date()}
+                                            />
+                                        </View>
+                                    )}
+                                />
+                                {userRegisterForm.formState.errors.birthday && <Text className="text-red-500 text-xs">{userRegisterForm.formState.errors.birthday.message}</Text>}
+                            </View>
+
+                            <View className="gap-2">
+                                <Label>Gender</Label>
+                                <Controller
+                                    control={userRegisterForm.control}
+                                    name="gender"
+                                    render={({ field: { onChange, value } }) => {
+                                        const selectedOption = GENDER_OPTIONS.find(opt => opt.value === value);
+                                        return (
+                                            <Select 
+                                                value={selectedOption as Option | undefined} 
+                                                onValueChange={(option) => {
+                                                    if (option) {
+                                                        onChange(option.value);
+                                                    }
+                                                }}
+                                                disabled={isLoading}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select your gender" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectGroup>
+                                                        {GENDER_OPTIONS.map((opt) => (
+                                                            <SelectItem key={opt.value} value={opt.value} label={opt.label}>
+                                                                {opt.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectGroup>
+                                                </SelectContent>
+                                            </Select>
+                                        )
+                                    }}
+                                />
+                                {userRegisterForm.formState.errors.gender && (
+                                    <Text className="text-red-500 text-xs">
+                                        {userRegisterForm.formState.errors.gender.message}
+                                    </Text>
+                                )}
+                            </View>
+
+                            <View className="gap-2">
+                                <Label>Phone</Label>
+                                <Controller
+                                    control={userRegisterForm.control}
+                                    name="phone"
+                                    render={({ field: { onChange, onBlur, value } }) => (
+                                        <Input
+                                            onBlur={onBlur}
+                                            onChangeText={onChange}
+                                            value={value}
+                                            placeholder="Phone number"
+                                            keyboardType="phone-pad"
+                                            editable={!isLoading}
+                                            aria-invalid={!!userRegisterForm.formState.errors.phone}
+                                        />
+                                    )}
+                                />
+                                {userRegisterForm.formState.errors.phone && <Text className="text-red-500 text-xs">{userRegisterForm.formState.errors.phone.message}</Text>}
+                            </View>
+                        </View>
+                    )}
                 </View>
             </CardContent>
-            <CardFooter className="flex-col gap-2">
-                <Button className="w-full" onPress={userRegisterForm.handleSubmit(onSubmit)}>
-                    <Text>Sign-up</Text>
-                </Button>
-                <Button variant="outline" className="w-full">
-                    <Text>Login</Text>
-                </Button>
-            </CardFooter>
+            {currentStep > 0 && (
+                <CardFooter className="flex-col gap-2">
+                    <Button 
+                        className="w-full flex-row gap-2" 
+                        onPress={currentStep === 3 ? userRegisterForm.handleSubmit(onSubmit) : nextStep}
+                        disabled={isLoading}
+                        style={{ opacity: isLoading ? 0.7 : 1 }}
+                    >
+                        {isLoading && <ActivityIndicator color={colorScheme === 'dark' ? "black" : "white"} />}
+                        <Text className="font-bold">
+                            {currentStep === 3 ? "Register" : "Next"}
+                        </Text>
+                    </Button>
+                </CardFooter>
+            )}
         </Card>
     );
 }

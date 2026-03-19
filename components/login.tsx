@@ -13,6 +13,7 @@ import { Text } from '@/components/ui/text';
 import { View } from 'react-native';
  
 export function Login() {
+  
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="flex-row">

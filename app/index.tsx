@@ -7,7 +7,7 @@ import { MoonStarIcon, StarIcon, SunIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { Image, type ImageStyle, View } from 'react-native';
-import { Login } from '@/components/login';
+import Register from '@/components/register';
 
 const LOGO = {
   light: require('@/assets/images/react-native-reusables-light.png'),
@@ -32,7 +32,7 @@ export default function Screen() {
     <>
       <Stack.Screen options={SCREEN_OPTIONS} />
       <View className="flex-1 items-center justify-center gap-8 p-4">
-        <Login />
+        <Register />
       </View>
     </>
   );
