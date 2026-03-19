@@ -10,8 +10,8 @@ import { Image, type ImageStyle, View } from 'react-native';
 import Register from '@/components/register';
 
 const LOGO = {
-  light: require('@/assets/images/react-native-reusables-light.png'),
-  dark: require('@/assets/images/react-native-reusables-dark.png'),
+  light: require('@/assets/images/logo_bcc.jpg'),
+  dark: require('@/assets/images/logo_bcc.jpg'),
 };
 
 const SCREEN_OPTIONS = {

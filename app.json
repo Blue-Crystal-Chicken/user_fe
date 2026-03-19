@@ -4,11 +4,11 @@
     "slug": "blue_crystall_chicken",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo_bcc.jpg",
     "scheme": "blue_crystall_chicken",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/logo_bcc.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -20,14 +20,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logo_bcc.jpg",
         "backgroundColor": "#ffffff"
       }
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo_bcc.jpg"
     },
     "plugins": [
       "expo-router",

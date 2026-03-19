@@ -103,9 +103,8 @@ export default function Register() {
 
     const onSubmit = async (data: UserRegister) => {
         setIsLoading(true);
-        console.log("onSubmit triggered with data:", data);
-        const hostIp = "192.168.0.242"; 
-        const baseUrl = Platform.OS === 'web' ? "http://localhost:8080" : `http://${hostIp}:8080`;
+        console.log("onSubmit triggered with data:", data); 
+        const baseUrl = Platform.OS === 'web' ? process.env.EXPO_PUBLIC_API_URL_WEB : process.env.EXPO_PUBLIC_API_URL_MOBILE;
         
         try {
             const response = await fetch(`${baseUrl}/api/users/v1/register`, {
