@@ -1,16 +1,3 @@
-
-// User
-// id          BIGSERIAL       NOT NULL,
-//     Name        VARCHAR(255)    NOT NULL,
-//     Surname     VARCHAR(255)    NOT NULL,
-//     Birthday    DATE,
-//     Email       VARCHAR(255)    NOT NULL UNIQUE,
-//     Password    VARCHAR(255)    NOT NULL,
-//     Gender      VARCHAR(50),
-//     Phone       VARCHAR(50),
-//     Role        VARCHAR(50)     NOT NULL DEFAULT 'USER',
-//     Created_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     Updated_at  TIMESTAMP,
 export interface User {
     id: string;
     name: string;
@@ -28,4 +15,29 @@ export interface User {
 export interface UserLogin {
     email: string;
     password: string;
+}
+
+export interface Category{
+    id: string;
+    name: string;
+}
+
+export interface Ingredient{
+    id: string;
+    name: string;
+}
+
+export interface Product{
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    img_path: string;
+    category: Category;
+    size: string;
+    quantity: number;
+    additions: number;
+    nutritionalInfo: string;
+    ingredients: Ingredient[];
+    updatedAt: string;
 }

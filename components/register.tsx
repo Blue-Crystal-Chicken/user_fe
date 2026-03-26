@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
 import { Icon } from "./ui/icon";
+import { useAuth } from "./context/AuthContext";
 import {
   Select,
   SelectContent,
@@ -39,15 +40,17 @@ const userRegister = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters long"),
     gender: z.string().min(1, "Gender is required"),
-    phone: z.string().min(1, "Phone is required")
+    phone: z.string().min(1, "Phone is required"),
+    role: z.string().min(1, "Role is required"),
 })
 
 type UserRegister = z.infer<typeof userRegister>
 
 export default function Register() {
     const router = useRouter();
+    const { login } = useAuth();
     const { colorScheme } = useColorScheme();
-    const [currentStep, setCurrentStep] = useState(0);
+    const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
 
     const userRegisterForm = useForm<UserRegister>({
@@ -59,7 +62,8 @@ export default function Register() {
             email: "",
             password: "",
             gender: "",
-            phone: ""
+            phone: "",
+            role: "USER"
         }
     })
 
@@ -98,16 +102,21 @@ export default function Register() {
     };
 
     const prevStep = () => {
-        setCurrentStep(prev => prev - 1);
+        if (currentStep === 1) {
+            router.back();
+        } else {
+            setCurrentStep(prev => prev - 1);
+        }
     };
 
     const onSubmit = async (data: UserRegister) => {
         setIsLoading(true);
         console.log("onSubmit triggered with data:", data); 
         const baseUrl = Platform.OS === 'web' ? process.env.EXPO_PUBLIC_API_URL_WEB : process.env.EXPO_PUBLIC_API_URL_MOBILE;
-        
+        data.role = "USER";
+        console.log("onSubmit triggered with data:", data); 
         try {
-            const response = await fetch(`${baseUrl}/api/users/v1/register`, {
+            const response = await fetch(`${baseUrl}/api/auth/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -123,6 +132,7 @@ export default function Register() {
 
             const result = await response.json();
             console.log("Success:", result);
+            login(result.token, result);
             router.replace("/home");
         } catch (error) {
             console.error("Network error:", error);
@@ -135,37 +145,22 @@ export default function Register() {
     return (
         <Card className="w-full max-w-sm">
             <CardHeader className="flex-row items-center gap-2">
-                {currentStep > 0 && (
-                    <Button variant="ghost" size="icon" onPress={prevStep} disabled={isLoading}>
-                        <Icon as={ChevronLeft} size={20} className="text-foreground" />
-                    </Button>
-                )}
+                <Button variant="ghost" size="icon" onPress={prevStep} disabled={isLoading}>
+                    <Icon as={ChevronLeft} size={20} className="text-foreground" />
+                </Button>
                 <View className="flex-1 gap-1.5">
                     <CardTitle>
-                        {currentStep === 0 ? "Welcome" : 
-                         currentStep === 1 ? "Personal Info" : 
+                        {currentStep === 1 ? "Personal Info" : 
                          currentStep === 2 ? "Account Security" : "Additional Info"}
                     </CardTitle>
                     <CardDescription>
-                        {currentStep === 0 ? "Login or create a new account" : 
-                         currentStep === 1 ? "Enter your name and surname" : 
+                        {currentStep === 1 ? "Enter your name and surname" : 
                          currentStep === 2 ? "Provide your email and password" : "Final details for your profile"}
                     </CardDescription>
                 </View>
             </CardHeader>
             <CardContent>
                 <View className="w-full justify-center gap-4">
-                    {currentStep === 0 && (
-                        <View className="gap-4 py-4">
-                            <Button className="w-full" onPress={() => setCurrentStep(1)}>
-                                <Text>Register</Text>
-                            </Button>
-                            <Button variant="outline" className="w-full">
-                                <Text>Login</Text>
-                            </Button>
-                        </View>
-                    )}
-
                     {currentStep === 1 && (
                         <View className="gap-4">
                             <View className="gap-2">
@@ -262,23 +257,45 @@ export default function Register() {
                                     name="birthday"
                                     render={({ field: { onChange, value } }) => (
                                         <View>
-                                            <Pressable onPress={showDatePicker} disabled={isLoading}>
-                                                <View pointerEvents="none">
-                                                    <Input
-                                                        value={value}
-                                                        placeholder="YYYY-MM-DD"
-                                                        editable={false}
-                                                        aria-invalid={!!userRegisterForm.formState.errors.birthday}
+                                            {Platform.OS === 'web' ? (
+                                                <input
+                                                    type="date"
+                                                    value={value}
+                                                    onChange={(e) => onChange(e.target.value)}
+                                                    max={new Date().toISOString().split('T')[0]}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: 40,
+                                                        padding: '0 12px',
+                                                        borderRadius: 6,
+                                                        border: '1px solid #e2e8f0',
+                                                        backgroundColor: 'transparent',
+                                                        color: colorScheme === 'dark' ? '#f8fafc' : '#0f172a',
+                                                        fontSize: 16,
+                                                        outline: 'none'
+                                                    }}
+                                                />
+                                            ) : (
+                                                <>
+                                                    <Pressable onPress={showDatePicker} disabled={isLoading}>
+                                                        <View pointerEvents="none">
+                                                            <Input
+                                                                value={value}
+                                                                placeholder="YYYY-MM-DD"
+                                                                editable={false}
+                                                                aria-invalid={!!userRegisterForm.formState.errors.birthday}
+                                                            />
+                                                        </View>
+                                                    </Pressable>
+                                                    <DateTimePickerModal
+                                                        isVisible={isDatePickerVisible}
+                                                        mode="date"
+                                                        onConfirm={(date) => handleConfirm(date, onChange)}
+                                                        onCancel={hideDatePicker}
+                                                        maximumDate={new Date()}
                                                     />
-                                                </View>
-                                            </Pressable>
-                                            <DateTimePickerModal
-                                                isVisible={isDatePickerVisible}
-                                                mode="date"
-                                                onConfirm={(date) => handleConfirm(date, onChange)}
-                                                onCancel={hideDatePicker}
-                                                maximumDate={new Date()}
-                                            />
+                                                </>
+                                            )}
                                         </View>
                                     )}
                                 />
