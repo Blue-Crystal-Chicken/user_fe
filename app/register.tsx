@@ -7,16 +7,7 @@ import { Icon } from '@/components/ui/icon';
 export default function RegisterScreen() {
   return (
     <View className="flex-1 items-center justify-center p-4 bg-background">
-      <Stack.Screen 
-        options={{ 
-          title: 'Register',
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.replace('/')} className="mr-4">
-              <Icon as={ArrowLeft} size={24} />
-            </TouchableOpacity>
-          )
-        }} 
-      />
+      <Stack.Screen options={{ title: 'Register' }} />
       <Register />
     </View>
   );

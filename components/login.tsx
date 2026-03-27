@@ -10,7 +10,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Text } from '@/components/ui/text';
-import { View, Platform, ActivityIndicator } from 'react-native';
+import { View, Platform, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +18,8 @@ import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from './context/AuthContext';
 import { useColorScheme } from 'nativewind';
+import { ArrowLeft } from 'lucide-react-native';
+import { Icon } from "./ui/icon";
 
 const loginSchema = z.object({
     email: z.string().email("Invalid email address"),
@@ -62,7 +64,8 @@ export function Login() {
             }
 
             const result = await response.json();
-            login(result.token, result.user);
+            const { token, ...user } = result.body;
+            login(token, user);
             router.replace("/home");
         } catch (err) {
             console.error("Login error:", err);
@@ -74,9 +77,14 @@ export function Login() {
 
     return (
         <Card className="w-full max-w-sm">
-            <CardHeader>
+            <CardHeader className="flex-row items-center gap-2">
+                <TouchableOpacity onPress={() => router.replace('/')} className="mr-4">
+                    <Icon as={ArrowLeft} size={24} className="text-foreground" />
+                </TouchableOpacity>
+                <View className="flex-1 gap-1.5">
                 <CardTitle>Login</CardTitle>
                 <CardDescription>Enter your credentials to access your account</CardDescription>
+                </View>
             </CardHeader>
             <CardContent className="gap-4">
                 <View className="gap-2">

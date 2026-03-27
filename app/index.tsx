@@ -8,7 +8,7 @@ import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { useEffect } from 'react';
 import { Image, type ImageStyle, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/components/context/AuthContext';
 
 const LOGO = {
   light: require('@/assets/images/logo_bcc.jpg'),
@@ -30,15 +30,13 @@ export default function Screen() {
   const { colorScheme } = useColorScheme();
   const router = useRouter();
 
-  useEffect(() => {
-    const checkToken = async () => {
-      const token = await AsyncStorage.getItem('token');
-      if (token) {
-        router.replace('/home');
-      }
-    };
-    checkToken();
-  }, []);
+const { token, isLoading } = useAuth();
+
+useEffect(() => {
+  if (!isLoading && token) {
+    router.replace('/home');
+  }
+}, [token, isLoading]);
 
   return (
     <>

@@ -132,7 +132,8 @@ export default function Register() {
 
             const result = await response.json();
             console.log("Success:", result);
-            login(result.token, result);
+            const { token, ...user } = result.body;
+            login(token, user);
             router.replace("/home");
         } catch (error) {
             console.error("Network error:", error);
