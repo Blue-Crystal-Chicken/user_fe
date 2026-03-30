@@ -27,17 +27,27 @@ export interface Ingredient{
     name: string;
 }
 
-export interface Product{
+export interface Product {
     id: string;
     name: string;
     description: string;
-    price: number;
-    img_path: string;
     category: Category;
     size: string;
     quantity: number;
+    weight?: number;           
+    liters?: number;          
     additions: number;
+    price: number;
     nutritionalInfo: string;
+    calories?: number;     
+    isSpicy?: boolean;
+    flavor?: string;
+    temperature?: string;
+    isCarbonated?: boolean;
+    isVegetarian?: boolean;
+    isVegan?: boolean;
+    isGlutenFree?: boolean;
+    imgPath?: string;
     ingredients: Ingredient[];
     updatedAt: string;
 }
