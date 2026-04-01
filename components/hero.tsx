@@ -1,12 +1,10 @@
 import React from 'react';
 import { StyleSheet, View, Text, ImageBackground, Dimensions, Image } from 'react-native';
-import { Badge } from './ui/badge';
-import { Icon } from './ui/icon';
-import { BadgeCheckIcon } from 'lucide-react-native';
+
 import StatusBadge from './status_badge';
 
 const { height } = Dimensions.get('window');
-const AVATAR_SIZE = 180;
+const AVATAR_SIZE = 200;
 
 const Hero = ({ title, subtitle }: { title: string; subtitle: string }) => {
   return (
@@ -70,7 +68,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   avatarImage: {
-    width: '90%', // Ridotto leggermente per non toccare il bordo se l'immagine è quadrata
+    width: '90%',
     height: '90%',
   },
   textContainer: {
