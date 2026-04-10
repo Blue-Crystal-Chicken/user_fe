@@ -51,3 +51,9 @@ export interface Product {
     ingredients: Ingredient[];
     updatedAt: string;
 }
+
+
+export interface Location{
+    city: string;
+    isOpen: boolean;
+}

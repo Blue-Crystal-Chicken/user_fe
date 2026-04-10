@@ -21,7 +21,7 @@ export function ProductDetails({ product }: { product: Product }) {
       <View className="relative">
         <Image
           source={{ uri: `${baseUrl}/${product.imgPath}?t=${product.updatedAt}` }}
-          style={{ width: "100%", height: 240 }}   // un po' più alta per bilanciare
+          style={{ width: "100%", height: 240 }}  
           contentFit="cover"
           transition={300}
           onError={(e) => console.log("Image error: ", e.error)}

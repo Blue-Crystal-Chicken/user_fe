@@ -1,12 +1,38 @@
-import React from 'react';
-import { StyleSheet, View, Text, ImageBackground, Dimensions, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, ImageBackground, Dimensions, Image, Platform } from 'react-native';
 
 import StatusBadge from './status_badge';
+import { Location } from '@/type';
 
 const { height } = Dimensions.get('window');
 const AVATAR_SIZE = 200;
 
 const Hero = ({ title, subtitle }: { title: string; subtitle: string }) => {
+
+  const [location,setLocation] = useState <Location[]> ([]);
+
+  const baseUrl = Platform.OS === 'web'
+      ? process.env.EXPO_PUBLIC_API_URL_WEB
+      : process.env.EXPO_PUBLIC_API_URL_MOBILE;
+  
+
+  useEffect(()=> {
+    const fetchLocation = async () => {
+      try{
+        const response = await fetch(`${baseUrl}/api/locations/city/torino`)
+        const data: Location[] = await response.json();
+        if (data && data.length > 0) {
+          setLocation(data);
+          console.log("Location found: " + data[0].city);
+          console.log("Location open: " + data[0].isOpen);
+        }
+      } catch (error) {
+        console.error("Error fetching location:", error);
+      }
+    };
+    fetchLocation();
+  },[]);
+
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -29,7 +55,9 @@ const Hero = ({ title, subtitle }: { title: string; subtitle: string }) => {
             <Text style={styles.welcomeSpan}>Welcome to</Text>
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.subtitle}>{subtitle}</Text>
-            <StatusBadge isOpen={true} />
+            {location.length > 0 && (
+              <StatusBadge isOpen={location[0].isOpen} city={location[0].city} />
+            )}
           </View>
         </View>
       </ImageBackground>

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Animated, Text } from 'react-native';
 
-const StatusBadge = ({ isOpen }: { isOpen: boolean }) => {
+const StatusBadge = ({ isOpen, city }: { isOpen: boolean, city: string }) => {
   const opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -40,7 +40,7 @@ const StatusBadge = ({ isOpen }: { isOpen: boolean }) => {
         ]} 
       />
       <Text style={styles.statusText}>
-        {isOpen ? 'Open Now' : 'Closed'}
+        {city} - {isOpen ? 'Open' : 'Closed'}
       </Text>
     </View>
   );
