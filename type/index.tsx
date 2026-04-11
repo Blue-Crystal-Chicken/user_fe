@@ -59,28 +59,11 @@ export interface Location{
 }
 
 export interface MenuProduct {
-    id: string;
-    name: string;
-    description: string;
-    category: Category;
-    size: string;
+    productId: string;
+    productName: string;
     quantity: number;
-    weight?: number;
-    liters?: number;
-    additions: number;
-    price: number;
-    nutritionalInfo: string;
-    calories?: number;
-    isSpicy?: boolean;
-    flavor?: string;
-    temperature?: string;
-    isCarbonated?: boolean;
-    isVegetarian?: boolean;
-    isVegan?: boolean;
-    isGlutenFree?: boolean;
-    imgPath?: string;
-    ingredients: Ingredient[];
-    updatedAt: string;
+    obligatory: boolean;
+    unitPrice: number;
 }
 
 export interface Menu {
@@ -89,6 +72,6 @@ export interface Menu {
     description: string;
     price: number;
     imgPath?: string;
-    products: MenuProduct[];
+    menuProducts: MenuProduct[];
     updatedAt: string;
 }

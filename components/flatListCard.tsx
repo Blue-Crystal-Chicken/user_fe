@@ -2,22 +2,24 @@ import { Menu } from "@/type";
 import { FlatList, TouchableOpacity, View, Platform } from "react-native";
 import { Image } from "expo-image";
 import { Text } from "./ui/text";
+import { useRouter, Href } from "expo-router";
+
 
 const baseUrl = Platform.OS === 'web'
-  ? process.env.EXPO_PUBLIC_API_URL_WEB
-  : process.env.EXPO_PUBLIC_API_URL_MOBILE;
+    ? process.env.EXPO_PUBLIC_API_URL_WEB
+    : process.env.EXPO_PUBLIC_API_URL_MOBILE;
 
-
-  const getMenuImgUrl = (imagePath?: string | null, updatedAt?: string): string | undefined => {
-  if (!imagePath) return undefined;
-  const timestamp = updatedAt ? `?t=${updatedAt}` : '';
-  if (imagePath.startsWith('http')) return `${imagePath}${timestamp}`;
-  return `${baseUrl}/${imagePath}${timestamp}`;
+const getMenuImgUrl = (imagePath?: string | null, updatedAt?: string): string | undefined => {
+    if (!imagePath) return undefined;
+    const timestamp = updatedAt ? `?t=${updatedAt}` : '';
+    if (imagePath.startsWith('http')) return `${imagePath}${timestamp}`;
+    return `${baseUrl}/${imagePath}${timestamp}`;
 };
 
-export function FlatListCard({menus} : {menus : Menu[]}){
+export function FlatListCard({ menus }: { menus: Menu[] }) {
+    const router = useRouter();
 
-return(
+    return (
         <FlatList
             data={menus}
             keyExtractor={(item) => item.id.toString()}
@@ -26,7 +28,7 @@ return(
             contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
             renderItem={({ item }) => (
                 <TouchableOpacity
-                    onPress={() => console.log('Menu selected:', item.id)}
+                    onPress={() => router.push(`/menu/${item.id}` as Href)}
                     style={{ width: 280 }}
                 >
                     <View className="rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800">
@@ -51,5 +53,5 @@ return(
         />
     )
 
-    
+
 }

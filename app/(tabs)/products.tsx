@@ -123,14 +123,14 @@ export default function ProductsScreen() {
         ) : products.length > 0 ? (
           <FlatList
             data={products}
-            keyExtractor={(item) => item.id.toString()}   // corretto: toString()
+            keyExtractor={(item) => item.id.toString()}   
             numColumns={2}
             columnWrapperStyle={{ gap: 14 }}
             contentContainerStyle={{ paddingBottom: 100, gap: 14 }}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <TouchableOpacity
-                onPress={() => router.push(`/product/${item.id}`)}   // ora dovrebbe andare
+                onPress={() => router.push(`/product/${item.id}`)}   
                 className="flex-1 active:opacity-90"
               >
                 <Card className="flex-1 overflow-hidden border border-border/80">
@@ -138,7 +138,7 @@ export default function ProductsScreen() {
                     {item.imgPath ? (
                       <Image
                         source={{ 
-                          uri: getImageUrl(item.imgPath, item.updatedAt)   // qui è sempre string | undefined
+                          uri: getImageUrl(item.imgPath, item.updatedAt) 
                         }}
                         style={{ width: '100%', height: 140 }}
                         contentFit="cover"
