@@ -1,9 +1,10 @@
-import { Product } from "@/type";
+import { Menu, Product } from "@/type";
 import { Text, View, ScrollView, TouchableOpacity, Platform, StatusBar } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { FlatListCard } from "./flatListCard";
 
 const baseUrl = Platform.OS === 'web'
   ? process.env.EXPO_PUBLIC_API_URL_WEB
@@ -11,11 +12,28 @@ const baseUrl = Platform.OS === 'web'
 
 export function ProductDetails({ product }: { product: Product }) {
   const router = useRouter();
+  const [menu,setMenu] = useState<Menu[]> ([])
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+          const fetchMenus = async () => {
+              try {
+                  const response = await fetch(`${baseUrl}/api/menus`);
+                  if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+                  const data = await response.json();
+                  setMenu(data);
+              } catch (err) {
+                  console.error('Error fetching menus:', err);
+                  setError('Impossibile caricare i menu');
+              }
+          };
+          fetchMenus();
+      }, []);
 
   return (
     <ScrollView 
       className="flex-1 bg-background"
-      contentContainerStyle={{ paddingBottom: 100 }} // spazio extra sotto
+      contentContainerStyle={{ paddingBottom: 40 }} // spazio extra ridotto sotto
     >
       {/* Hero Image con spazio per lo status bar */}
       <View className="relative">
@@ -78,12 +96,46 @@ export function ProductDetails({ product }: { product: Product }) {
               </View>
             )}
 
-            {product.isSpicy !== null && (
-              <View className={`px-4 py-2.5 rounded-2xl ${product.isSpicy ? 'bg-orange-500/10' : 'bg-secondary'}`}>
-                <Text className={`text-sm ${product.isSpicy ? 'text-orange-500' : 'text-foreground'}`}>
-                  🌶️ {product.isSpicy ? "Piccante" : "Non piccante"}
-                </Text>
+            {product.liters && (
+              <View className="bg-secondary px-4 py-2.5 rounded-2xl">
+                <Text className="text-sm text-foreground">{product.liters} L</Text>
               </View>
+            )}
+
+            {product.quantity && (
+              <View className="bg-secondary px-4 py-2.5 rounded-2xl">
+                <Text className="text-sm text-foreground">{product.quantity} </Text>
+              </View>
+            )}
+
+            {product.size && (
+              <View className="bg-secondary px-4 py-2.5 rounded-2xl">
+                <Text className="text-sm text-foreground">{product.size} </Text>
+              </View>
+            )}
+
+            {product.flavor && (
+              <View className="bg-secondary px-4 py-2.5 rounded-2xl">
+                <Text className="text-sm text-foreground">{product.flavor} </Text>
+              </View>
+            )}
+
+            {product.temperature && (
+              <View className="bg-secondary px-4 py-2.5 rounded-2xl">
+                <Text className="text-sm text-foreground">{product.temperature}</Text>
+              </View>
+            )}
+
+            {product.isCarbonated && (
+              <View className="bg-secondary px-4 py-2.5 rounded-2xl">
+                <Text className="text-sm text-foreground">{product.isCarbonated ? "Frizzante" : "Naturale"}</Text>
+              </View>
+            )}
+
+            {product.isSpicy && (
+                  <View className="bg-secondary px-4 py-2.5 rounded-2xl">
+                    <Text className="text-sm text-foreground">🌶️ Piccante</Text>
+                  </View>
             )}
 
             {product.isVegetarian && (
@@ -132,10 +184,21 @@ export function ProductDetails({ product }: { product: Product }) {
             </View>
           </View>
         )}
+        {/* Menu */}
+        {
+          menu &&(
+            <View className="bg-card border border-border rounded-3xl p-6 gap-5">
+              <Text className="text-xs font-semibold uppercase tracking-widest text-muted-foreground px-1">
+              MENU
+            </Text>
+            <FlatListCard menus={menu} />
+            </View>
+          )
+        }
       </View>
 
       {/* Prezzo fisso in fondo */}
-      <View className="border-t border-border bg-background px-5 py-6">
+      <View className="border-t border-border bg-background px-5 pt-6 pb-2">
         <View className="bg-card border border-border rounded-3xl p-5 flex-row items-center justify-between">
           <Text className="text-muted-foreground text-base">Prezzo totale</Text>
           <Text className="text-4xl font-bold text-foreground">

@@ -57,3 +57,38 @@ export interface Location{
     city: string;
     isOpen: boolean;
 }
+
+export interface MenuProduct {
+    id: string;
+    name: string;
+    description: string;
+    category: Category;
+    size: string;
+    quantity: number;
+    weight?: number;
+    liters?: number;
+    additions: number;
+    price: number;
+    nutritionalInfo: string;
+    calories?: number;
+    isSpicy?: boolean;
+    flavor?: string;
+    temperature?: string;
+    isCarbonated?: boolean;
+    isVegetarian?: boolean;
+    isVegan?: boolean;
+    isGlutenFree?: boolean;
+    imgPath?: string;
+    ingredients: Ingredient[];
+    updatedAt: string;
+}
+
+export interface Menu {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    imgPath?: string;
+    products: MenuProduct[];
+    updatedAt: string;
+}
