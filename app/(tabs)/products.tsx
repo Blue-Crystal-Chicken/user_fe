@@ -1,20 +1,22 @@
 import * as React from 'react';
 import { View, ScrollView, TouchableOpacity, FlatList, Platform } from 'react-native';
 import { Text } from '@/components/ui/text';
-import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { Category, Product } from '@/type';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
+import { useAuth } from "@/components/context/AuthContext";
 
-const DEFAULT_CATEGORIES: Category[] = [{ id: "0", name: "All" }];
+const DEFAULT_CATEGORIES: Category[] = [{ id: "0", name: "All" }, { id: "favorites", name: "FAVORITES" }];
 
 export default function ProductsScreen() {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const user = useAuth().user;
+  const userId = user.id;
 
   const baseUrl = Platform.OS === 'web'
     ? process.env.EXPO_PUBLIC_API_URL_WEB
@@ -40,7 +42,7 @@ export default function ProductsScreen() {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${baseUrl}/api/products/v1/category/${selectedCategory}`);
+        const response = await fetch(`${baseUrl}/api/products/v1/category/${selectedCategory}/${userId}`);
         const data: Product[] = await response.json();
         setProducts(data);
       } catch (error) {
@@ -53,6 +55,7 @@ export default function ProductsScreen() {
 
     fetchProducts();
   }, [selectedCategory]);
+
 
   // Funzione sicura per generare l'URL dell'immagine
   const getImageUrl = (imagePath?: string | null, updatedAt?: string): string | undefined => {
@@ -68,31 +71,32 @@ export default function ProductsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background">
-      {/* Categorie */}
-      <View className="pt-5 pb-4 px-5">
+    <View className="flex-1 bg-[#0a0f1c]">
+      
+      {/* Categorie - Crystal Style */}
+      <View className="pt-6 pb-5 px-5">
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 10 }}
+          contentContainerStyle={{ gap: 12 }}
         >
           {categories.map((category) => (
             <TouchableOpacity
               key={category.id}
               onPress={() => setSelectedCategory(category.name)}
               className={cn(
-                "px-6 py-3 rounded-2xl border transition-all active:scale-95",
+                "px-7 py-[13px] rounded-2xl border transition-all active:scale-[0.96]",
                 selectedCategory === category.name 
-                  ? "bg-primary border-primary" 
-                  : "bg-card border-border"
+                  ? "bg-[#4cc9f0] border-[#4cc9f0]" 
+                  : "bg-[#121a2e] border-[#4cc9f033]"
               )}
             >
               <Text
                 className={cn(
-                  "text-sm font-semibold",
+                  "text-sm font-semibold tracking-wide",
                   selectedCategory === category.name 
-                    ? "text-primary-foreground" 
-                    : "text-foreground"
+                    ? "text-[#0a0f1c]" 
+                    : "text-[#c0d4f0]"
                 )}
               >
                 {category.name.replace('_', ' ')}
@@ -104,21 +108,21 @@ export default function ProductsScreen() {
 
       {/* Lista Prodotti */}
       <View className="flex-1 px-5">
-        <View className="flex-row items-center justify-between mb-5">
-          <Text className="text-xl font-semibold tracking-tight">
+        <View className="flex-row items-center justify-between mb-6">
+          <Text className="text-white text-[22px] font-semibold tracking-[-0.4px]">
             {selectedCategory === "All" 
               ? "Tutti i prodotti" 
               : selectedCategory.replace('_', ' ')
             }
           </Text>
-          <Text className="text-sm text-muted-foreground">
+          <Text className="text-[#8ab4e0] text-sm">
             {products.length} prodotti
           </Text>
         </View>
 
         {loading ? (
           <View className="flex-1 items-center justify-center">
-            <Text className="text-muted-foreground">Caricamento...</Text>
+            <Text className="text-[#8ab4e0]">Caricamento...</Text>
           </View>
         ) : products.length > 0 ? (
           <FlatList
@@ -133,50 +137,53 @@ export default function ProductsScreen() {
                 onPress={() => router.push(`/product/${item.id}`)}   
                 className="flex-1 active:opacity-90"
               >
-                <Card className="flex-1 overflow-hidden border border-border/80">
+                <View className="flex-1 bg-[#121a2e] border border-[#4cc9f033] rounded-3xl overflow-hidden">
+                  
+                  {/* Immagine */}
                   <View>
                     {item.imgPath ? (
                       <Image
                         source={{ 
                           uri: getImageUrl(item.imgPath, item.updatedAt) 
                         }}
-                        style={{ width: '100%', height: 140 }}
+                        style={{ width: '100%', height: 148 }}
                         contentFit="cover"
-                        transition={200}
+                        transition={300}
                         onError={(e) => console.log("Image error:", e.error)}
                       />
                     ) : (
-                      <View className="w-full h-[140px] bg-muted flex items-center justify-center">
-                        <Text className="text-muted-foreground text-xs">No image</Text>
+                      <View className="w-full h-[148px] bg-[#1e2f5a] flex items-center justify-center">
+                        <Text className="text-[#67b8e0] text-xs">No image</Text>
                       </View>
                     )}
                   </View>
 
-                  <CardContent className="p-4 pt-3">
+                  {/* Contenuto */}
+                  <View className="p-4 pt-3">
                     <Text 
                       numberOfLines={2}
-                      className="font-semibold text-base leading-tight mb-2"
+                      className="text-white font-medium text-[15.5px] leading-5 mb-3"
                     >
                       {item.name}
                     </Text>
 
                     <View className="flex-row items-center justify-between">
-                      <Text className="text-xl font-bold text-foreground">
-                        {parseFloat(String(item.price)).toFixed(2)}€
+                      <Text className="text-[#4cc9f0] text-[19px] font-semibold">
+                        €{parseFloat(String(item.price)).toFixed(2)}
                       </Text>
                       
                       {item.isSpicy && (
-                        <Text className="text-orange-500 text-lg">🌶️</Text>
+                        <Text className="text-orange-400 text-xl">🌶️</Text>
                       )}
                     </View>
-                  </CardContent>
-                </Card>
+                  </View>
+                </View>
               </TouchableOpacity>
             )}
           />
         ) : (
           <View className="flex-1 items-center justify-center py-20">
-            <Text className="text-muted-foreground text-lg">Nessun prodotto trovato</Text>
+            <Text className="text-[#8ab4e0] text-lg">Nessun prodotto trovato</Text>
           </View>
         )}
       </View>

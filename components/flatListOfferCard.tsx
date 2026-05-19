@@ -1,4 +1,4 @@
-import { Menu } from "@/type";
+import { Offer } from "@/type";
 import { FlatList, TouchableOpacity, View, Platform } from "react-native";
 import { Image } from "expo-image";
 import { Text } from "./ui/text";
@@ -8,26 +8,26 @@ const baseUrl = Platform.OS === 'web'
     ? process.env.EXPO_PUBLIC_API_URL_WEB
     : process.env.EXPO_PUBLIC_API_URL_MOBILE;
 
-const getMenuImgUrl = (imagePath?: string | null, updatedAt?: string): string | undefined => {
+const getOfferImgUrl = (imagePath?: string | null, updatedAt?: string): string | undefined => {
     if (!imagePath) return undefined;
     const timestamp = updatedAt ? `?t=${updatedAt}` : '';
     if (imagePath.startsWith('http')) return `${imagePath}${timestamp}`;
     return `${baseUrl}/${imagePath}${timestamp}`;
 };
 
-export function FlatListCard({ menus }: { menus: Menu[] }) {
+export function FlatListOfferCard({ offers }: { offers: Offer[] }) {
     const router = useRouter();
 
     return (
         <FlatList
-            data={menus}
+            data={offers}
             keyExtractor={(item) => item.id.toString()}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 16, gap: 16 }}
             renderItem={({ item }) => (
                 <TouchableOpacity
-                    onPress={() => router.push(`/menu/${item.id}` as Href)}
+                    onPress={() => router.push(`/offers/${item.id}` as Href)}
                     style={{ width: 280 }}
                     activeOpacity={0.85}
                 >
@@ -35,7 +35,7 @@ export function FlatListCard({ menus }: { menus: Menu[] }) {
                         
                         {/* Immagine */}
                         <Image
-                            source={{ uri: getMenuImgUrl(item.imgPath, item.updatedAt) }}
+                            source={{ uri: getOfferImgUrl(item.imgPath, item.updatedAt) }}
                             style={{ width: 280, height: 172 }}
                             contentFit="cover"
                             transition={300}

@@ -64,7 +64,7 @@ export function Login() {
             }
 
             const result = await response.json();
-            const { token, ...user } = result.body;
+            const { token, ...user } = result;
             login(token, user);
             router.replace("/home");
         } catch (err) {

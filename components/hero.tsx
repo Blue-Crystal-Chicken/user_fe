@@ -5,39 +5,36 @@ import StatusBadge from './status_badge';
 import { Location } from '@/type';
 
 const { height } = Dimensions.get('window');
-const AVATAR_SIZE = 200;
+const AVATAR_SIZE = 210;
 
 const Hero = ({ title, subtitle }: { title: string; subtitle: string }) => {
-
-  const [location,setLocation] = useState <Location[]> ([]);
+  const [location, setLocation] = useState<Location[]>([]);
 
   const baseUrl = Platform.OS === 'web'
-      ? process.env.EXPO_PUBLIC_API_URL_WEB
-      : process.env.EXPO_PUBLIC_API_URL_MOBILE;
-  
+    ? process.env.EXPO_PUBLIC_API_URL_WEB
+    : process.env.EXPO_PUBLIC_API_URL_MOBILE;
 
-  useEffect(()=> {
+  useEffect(() => {
     const fetchLocation = async () => {
-      try{
-        const response = await fetch(`${baseUrl}/api/locations/city/torino`)
+      try {
+        const response = await fetch(`${baseUrl}/api/locations/city/torino`);
         const data: Location[] = await response.json();
         if (data && data.length > 0) {
           setLocation(data);
-          console.log("Location found: " + data[0].city);
-          console.log("Location open: " + data[0].isOpen);
         }
       } catch (error) {
         console.error("Error fetching location:", error);
       }
     };
     fetchLocation();
-  },[]);
+  }, []);
 
   return (
     <View style={styles.container}>
       <ImageBackground
         source={require('@/assets/images/hero_bg.png')}
         style={styles.image}
+        imageStyle={{ opacity: 0.85 }}
       >
         <View style={styles.overlay}>
           <View style={styles.avatarCenterer}>
@@ -45,12 +42,12 @@ const Hero = ({ title, subtitle }: { title: string; subtitle: string }) => {
               <Image
                 source={require('@/assets/images/avatar.png')}
                 style={styles.avatarImage}
-                resizeMode="contain" 
+                resizeMode="contain"
               />
             </View>
           </View>
 
-          {/* Testi in basso a sinistra */}
+          {/* Testi in basso */}
           <View style={styles.textContainer}>
             <Text style={styles.welcomeSpan}>Welcome to</Text>
             <Text style={styles.title}>{title}</Text>
@@ -67,16 +64,16 @@ const Hero = ({ title, subtitle }: { title: string; subtitle: string }) => {
 
 const styles = StyleSheet.create({
   container: {
-    height: height * 0.45,
+    height: height * 0.48,
     width: '100%',
   },
   image: {
     flex: 1,
   },
   overlay: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(10, 15, 28, 0.65)', // overlay blu scuro semi-trasparente
     flex: 1,
-    padding: 20,
+    padding: 24,
     justifyContent: 'space-between',
   },
   avatarCenterer: {
@@ -88,39 +85,44 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: AVATAR_SIZE / 2,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderWidth: 5,
+    borderColor: 'rgba(76, 201, 240, 0.45)', // bordo crystal blue
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(18, 26, 46, 0.6)',
+    shadowColor: '#4cc9f0',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
   },
   avatarImage: {
-    width: '90%',
-    height: '90%',
+    width: '88%',
+    height: '88%',
   },
   textContainer: {
     alignItems: 'flex-start',
   },
   welcomeSpan: {
-    color: '#34d399', // Un verde smeraldo o un colore che richiami il brand
+    color: '#67d8ff',
     fontSize: 14,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginBottom: 2,
+    letterSpacing: 1.8,
+    marginBottom: 4,
   },
   title: {
-    color: '#fff',
-    fontSize: 32,
-    fontWeight: 'bold',
-    lineHeight: 36,
+    color: '#ffffff',
+    fontSize: 34,
+    fontWeight: '700',
+    lineHeight: 38,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    color: '#e2e8f0',
-    fontSize: 16,
-    marginTop: 4,
-    opacity: 0.9,
+    color: '#c0d4f0',
+    fontSize: 16.5,
+    marginTop: 6,
+    opacity: 0.95,
   },
 });
 

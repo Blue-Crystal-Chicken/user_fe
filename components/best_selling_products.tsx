@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Product } from '@/type';
-import { View, Platform, Text, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
+import { View, Platform, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import { Text } from '@/components/ui/text';
 
 const baseUrl = Platform.OS === 'web'
   ? process.env.EXPO_PUBLIC_API_URL_WEB
@@ -40,40 +41,48 @@ export function BestSellingProducts() {
     fetchProducts();
   }, []);
 
-  if (loading) return <ActivityIndicator className="mt-4" />;
-  if (error) return <Text className="text-red-500 mt-4">{error}</Text>;
-  if (bestProducts.length === 0) return <Text className="text-gray-400 mt-4">Nessun prodotto disponibile</Text>;
+  if (loading) return <ActivityIndicator className="mt-6" color="#4cc9f0" />;
+  if (error) return <Text className="text-red-400 mt-6 px-5">{error}</Text>;
+  if (bestProducts.length === 0) return <Text className="text-[#8ab4e0] mt-6 px-5">Nessun prodotto disponibile</Text>;
 
   return (
     <FlatList
       data={bestProducts}
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+      contentContainerStyle={{ paddingHorizontal: 16, gap: 16 }}
       keyExtractor={(item) => item.id.toString()}
       renderItem={({ item }) => (
         <TouchableOpacity
           onPress={() => router.push(`/product/${item.id}`)}
-          style={{ width: 160 }}
+          activeOpacity={0.85}
+          style={{ width: 172 }}   // larghezza fissa
         >
-          <View className="rounded-2xl overflow-hidden bg-zinc-900">
+          <View className="rounded-3xl overflow-hidden bg-[#121a2e] border border-[#4cc9f033] h-[248px] flex-col">
+            
+            {/* Immagine - altezza fissa */}
             <Image
               source={{ uri: getImageUrl(item.imgPath, item.updatedAt) }}
-              style={{ width: 160, height: 160 }}
+              style={{ width: '100%', height: 150 }}
               contentFit="cover"
-              transition={200}
+              transition={300}
               onError={(e) => console.log('Image error:', e.error)}
             />
-            <View className="p-2">
+
+            {/* Contenuto testo - altezza fissa */}
+            <View className="flex-1 p-4 justify-between">
               <Text
-                className="text-white font-semibold text-sm"
+                className="text-white font-medium text-[15px] leading-[20px]"
                 numberOfLines={2}
+                ellipsizeMode="tail"
               >
                 {item.name}
               </Text>
+
+              {/* Prezzo sempre in basso */}
               {item.price && (
-                <Text className="text-green-400 text-xs mt-1">
-                  €{item.price}
+                <Text className="text-[#4cc9f0] font-semibold text-[17px] mt-auto">
+                  €{item.price.toFixed(2)}
                 </Text>
               )}
             </View>

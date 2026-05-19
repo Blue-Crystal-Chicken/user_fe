@@ -5,17 +5,16 @@ const StatusBadge = ({ isOpen, city }: { isOpen: boolean, city: string }) => {
   const opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Animazione loop: va da 1 a 0.3 e torna indietro
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, {
-          toValue: 0.3,
-          duration: 1000,
+          toValue: 0.35,
+          duration: 1200,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           toValue: 1,
-          duration: 1000,
+          duration: 1200,
           useNativeDriver: true,
         }),
       ])
@@ -25,7 +24,7 @@ const StatusBadge = ({ isOpen, city }: { isOpen: boolean, city: string }) => {
       animation.start();
     } else {
       animation.stop();
-      opacity.setValue(1); // Resta fisso se chiuso
+      opacity.setValue(1);
     }
 
     return () => animation.stop();
@@ -36,11 +35,14 @@ const StatusBadge = ({ isOpen, city }: { isOpen: boolean, city: string }) => {
       <Animated.View 
         style={[
           styles.dot, 
-          { backgroundColor: isOpen ? '#34d399' : '#ef4444', opacity } 
+          { 
+            backgroundColor: isOpen ? '#5ce1d6' : '#ef4444', 
+            opacity 
+          } 
         ]} 
       />
       <Text style={styles.statusText}>
-        {city} - {isOpen ? 'Open' : 'Closed'}
+        {city} • {isOpen ? 'APERTO' : 'CHIUSO'}
       </Text>
     </View>
   );
@@ -50,23 +52,26 @@ const styles = StyleSheet.create({
   badgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginTop: 8,
+    backgroundColor: 'rgba(18, 26, 46, 0.75)', // blu scuro semi-trasparente
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(76, 201, 240, 0.2)',
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    marginRight: 8,
   },
   statusText: {
-    color: '#fff',
-    fontSize: 12,
+    color: '#c0d4f0',
+    fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
 });
 

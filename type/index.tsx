@@ -75,3 +75,22 @@ export interface Menu {
     menuProducts: MenuProduct[];
     updatedAt: string;
 }
+
+export interface OfferProduct {
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+}
+
+export interface Offer {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    imgPath?: string;
+    offerProducts: OfferProduct[];
+    menus: Menu[];
+    updatedAt: string;
+}
+

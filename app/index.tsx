@@ -7,7 +7,7 @@ import { MoonStarIcon, SunIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { useEffect } from 'react';
-import { Image, type ImageStyle, View } from 'react-native';
+import { ActivityIndicator, Image, type ImageStyle, View } from 'react-native';
 import { useAuth } from '@/components/context/AuthContext';
 
 const LOGO = {
@@ -37,10 +37,17 @@ useEffect(() => {
     router.replace('/home');
   }
 }, [token, isLoading]);
+  if (isLoading || token) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
     <>
-      <Stack.Screen options={SCREEN_OPTIONS} />
+    <Stack.Screen options={SCREEN_OPTIONS} />
       <View className="flex-1 items-center justify-center gap-8 p-4">
         <View className="items-center gap-4">
           <Image source={LOGO[colorScheme ?? 'light']} style={IMAGE_STYLE} className="rounded-2xl" />
