@@ -16,7 +16,7 @@ export default function ProductsScreen() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const user = useAuth().user;
-  const userId = user.id;
+  const userId = user?.id;
 
   const baseUrl = Platform.OS === 'web'
     ? process.env.EXPO_PUBLIC_API_URL_WEB
@@ -54,6 +54,15 @@ export default function ProductsScreen() {
     };
 
     fetchProducts();
+    for(var i = 0; i < products.length; i++){
+      console.log("ID del prodotto: " + products[i].id);
+      console.log("Nome del prodotto: " + products[i].name);
+      console.log("Prezzo del prodotto: " + products[i].price);
+      console.log("Descrizione del prodotto: " + products[i].description);
+      console.log("Immagine del prodotto: " + products[i].imgPath);
+      console.log("Aggiornato il: " + products[i].updatedAt);
+      console.log("È preferito: " + products[i].isFavorite);
+    }
   }, [selectedCategory]);
 
 

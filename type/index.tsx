@@ -49,6 +49,7 @@ export interface Product {
     isGlutenFree?: boolean;
     imgPath?: string;
     ingredients: Ingredient[];
+    isFavorite?: boolean;
     updatedAt: string;
 }
 
@@ -73,6 +74,7 @@ export interface Menu {
     price: number;
     imgPath?: string;
     menuProducts: MenuProduct[];
+    isFavorite?: boolean;
     updatedAt: string;
 }
 

@@ -4,11 +4,14 @@ import { View, Platform, ActivityIndicator } from "react-native";
 import { Text } from "@/components/ui/text";
 import { Product } from "@/type";
 import { ProductDetails } from "@/components/product_details";
+import { useAuth } from "@/components/context/AuthContext";
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>(); 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const user = useAuth()?.user;
+  const userId = user?.id;
 
   const baseUrl = Platform.OS === "web"
     ? process.env.EXPO_PUBLIC_API_URL_WEB
@@ -20,7 +23,10 @@ export default function ProductDetailScreen() {
 
       try {
         setLoading(true);
-        const response = await fetch(`${baseUrl}/api/products/v1/products/${id}`);
+        const url = userId 
+          ? `${baseUrl}/api/products/v1/products/${id}/${userId}`
+          : `${baseUrl}/api/products/v1/products/${id}`;
+        const response = await fetch(url);
         
         if (!response.ok) {
           throw new Error(`HTTP error: ${response.status}`);
@@ -37,7 +43,7 @@ export default function ProductDetailScreen() {
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, userId]);
 
   // Loader durante il caricamento
   if (loading) {

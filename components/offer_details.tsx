@@ -185,9 +185,6 @@ export function OfferDetails({ offer }: { offer: Offer }) {
         className="bg-[#0a0f1c] border-t border-[#1e2f5a] p-4 flex-row items-center gap-3"
         style={{ paddingBottom: Platform.OS === "ios" ? 32 : 20 }}
       >
-        <TouchableOpacity className="w-[50px] h-[50px] rounded-2xl bg-[#121a2e] border border-[#4cc9f044] items-center justify-center">
-          <Heart color="#4cc9f0" size={20} strokeWidth={1.8} />
-        </TouchableOpacity>
 
         <TouchableOpacity className="flex-1 bg-[#4cc9f0] rounded-3xl p-4 items-center shadow-lg shadow-[#4cc9f0]/50">
           <Text className="text-[15px] font-semibold text-[#0a0f1c]">

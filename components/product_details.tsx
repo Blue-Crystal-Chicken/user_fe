@@ -3,7 +3,7 @@ import { Text, View, ScrollView, TouchableOpacity, Platform, StatusBar } from "r
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Heart } from "lucide-react-native";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatListCard } from "./flatListCard";
 import { useAuth } from "./context/AuthContext";
 
@@ -16,7 +16,7 @@ export function ProductDetails({ product }: { product: Product }) {
   const user = useAuth()?.user;
   const userId = user?.id;
   const [menus, setMenus] = useState<Menu[]>([]);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(product.isFavorite);
 
   useEffect(() => {
     const fetchMenus = async () => {
@@ -31,6 +31,8 @@ export function ProductDetails({ product }: { product: Product }) {
       }
     };
     fetchMenus();
+    console.log("Prodotto ID: " + product.id);
+    console.log("Is Favorite: " + isFavorite);
   }, []);
 
   const backButtonTop = (Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 48) + 12;
@@ -69,12 +71,8 @@ export function ProductDetails({ product }: { product: Product }) {
       };
       fetchFavorite();
     }
-
     setIsFavorite(!isFavorite);
-
   };
-
-  console.log("Product id: ",product.id, " User id: ",userId)
 
   return (
     <View className="flex-1 bg-[#0a0f1c]">

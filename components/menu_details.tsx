@@ -4,6 +4,8 @@ import { Platform, ScrollView, StatusBar, TouchableOpacity, View } from "react-n
 import { Text } from "@/components/ui/text";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Heart, ChevronRight } from "lucide-react-native";
+import React, { useState } from "react";
+import { useAuth } from "./context/AuthContext";
 
 const CRYSTAL_COLORS = [
   { bg: "#0f1b3a", border: "#4cc9f033", inner: "#67d8ff", innerEnd: "#1e3a7a" },
@@ -32,6 +34,9 @@ function ProductIcon({ index }: { index: number }) {
 
 export function MenuDetails({ menu }: { menu: Menu }) {
   const router = useRouter();
+  const user = useAuth()?.user;
+  const userId = user?.id;
+  const [isFavorite, setIsFavorite] = useState(menu.isFavorite);
 
   const baseUrl = Platform.OS === "web"
     ? process.env.EXPO_PUBLIC_API_URL_WEB
@@ -43,6 +48,40 @@ export function MenuDetails({ menu }: { menu: Menu }) {
   const risparmio = totalSingoli - menu.price;
 
   const backButtonTop = (Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 48) + 8;
+
+  const toggleFavorite = () => {
+    if (isFavorite) {
+      const fetchFavorite = async () => {
+        try {
+          const response = await fetch(`${baseUrl}/api/menus/favorite/v1/user/${userId}/${menu.id}`, {
+            method: "DELETE"
+          });
+          if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+        } catch (err) {
+          console.error('Error deleting favorite menu:', err);
+        }
+      };
+      fetchFavorite();
+    } else {
+      const fetchFavorite = async () => {
+        const favoriteData = { menuId: menu.id, userId: userId };
+        try {
+          const response = await fetch(`${baseUrl}/api/menus/favorite/v1/user/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(favoriteData)
+          });
+          if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+        } catch (err) {
+          console.error('Error adding favorite menu:', err);
+        }
+      };
+      fetchFavorite();
+    }
+    setIsFavorite(!isFavorite);
+  };
 
   return (
     <View className="flex-1 bg-[#0a0f1c]">
@@ -164,8 +203,16 @@ export function MenuDetails({ menu }: { menu: Menu }) {
         className="bg-[#0a0f1c] border-t border-[#1e2f5a] p-4 flex-row items-center gap-3"
         style={{ paddingBottom: Platform.OS === "ios" ? 32 : 20 }}
       >
-        <TouchableOpacity className="w-[50px] h-[50px] rounded-2xl bg-[#121a2e] border border-[#4cc9f044] items-center justify-center">
-          <Heart color="#4cc9f0" size={20} strokeWidth={1.8} />
+        <TouchableOpacity 
+          onPress={toggleFavorite}
+          className="w-[50px] h-[50px] rounded-2xl bg-[#121a2e] border border-[#4cc9f044] items-center justify-center"
+        >
+          <Heart 
+            color={isFavorite ? "#ff4d94" : "#4cc9f0"} 
+            size={20} 
+            strokeWidth={isFavorite ? 2.8 : 1.8}
+            fill={isFavorite ? "#ff4d94" : "transparent"}
+          />
         </TouchableOpacity>
 
         <TouchableOpacity className="flex-1 bg-[#4cc9f0] rounded-3xl p-4 items-center shadow-lg shadow-[#4cc9f0]/50">
