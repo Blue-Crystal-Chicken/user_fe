@@ -1,7 +1,23 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Platform } from 'react-native';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { Platform, Alert, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+
+// Configura il comportamento delle notifiche in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+const STORAGE_KEY_NOTIFICATIONS = 'notifications_enabled';
+const STORAGE_KEY_FCM_TOKEN = 'fcm_token';
 
 interface User {
   id: number;
@@ -18,8 +34,11 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
+  notificationsEnabled: boolean;
+  notificationsLoading: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
+  toggleNotifications: (enable: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,11 +47,206 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const fcmTokenRef = useRef<string | null>(null);
   const router = useRouter();
 
   const baseUrl = Platform.OS === 'web'
     ? process.env.EXPO_PUBLIC_API_URL_WEB
     : process.env.EXPO_PUBLIC_API_URL_MOBILE;
+
+  // Carica lo stato notifiche salvato
+  useEffect(() => {
+    const loadNotifState = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(STORAGE_KEY_NOTIFICATIONS);
+        const savedToken = await AsyncStorage.getItem(STORAGE_KEY_FCM_TOKEN);
+        if (saved !== null) setNotificationsEnabled(saved === 'true');
+        if (savedToken) fcmTokenRef.current = savedToken;
+      } catch (e) {
+        console.error('[Notifications] Errore caricamento stato:', e);
+      }
+    };
+    loadNotifState();
+  }, []);
+
+  const requestPermissionAndGetToken = async (): Promise<string | null> => {
+    if (!Device.isDevice) {
+      console.warn('[Notifications] Le notifiche push non funzionano su emulatori.');
+      return null;
+    }
+
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') {
+      console.warn('[Notifications] Permesso negato.');
+      return null;
+    }
+
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Notifiche BCC',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#4cc9f0',
+        sound: 'default',
+      });
+    }
+
+    try {
+      const pushTokenData = await Notifications.getDevicePushTokenAsync();
+      const deviceToken = pushTokenData.data;
+      fcmTokenRef.current = deviceToken;
+      await AsyncStorage.setItem(STORAGE_KEY_FCM_TOKEN, deviceToken);
+      console.log('[Notifications] FCM Token:', deviceToken);
+      return deviceToken;
+    } catch (e) {
+      console.error('[Notifications] Errore nel recuperare il token FCM:', e);
+      return null;
+    }
+  };
+
+  const registerDeviceOnBackend = async (
+    authToken: string,
+    userId: string | number,
+    fcmToken: string,
+  ): Promise<boolean> => {
+    if (!baseUrl) return false;
+    try {
+      const response = await fetch(`${baseUrl}/user-devices`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          userId: String(userId),
+          token: fcmToken,
+          platform: Platform.OS.toUpperCase(),
+        }),
+      });
+      const ok = response.ok || response.status === 201;
+      if (ok) console.log('[Notifications] Device registrato sul backend.');
+      else console.warn('[Notifications] Backend register error:', response.status);
+      return ok;
+    } catch (e) {
+      console.error('[Notifications] Errore rete register:', e);
+      return false;
+    }
+  };
+
+  const deregisterDeviceOnBackend = async (
+    authToken: string,
+    userId: string | number,
+    fcmToken: string,
+  ): Promise<boolean> => {
+    if (!baseUrl) return false;
+    try {
+      const response = await fetch(`${baseUrl}/user-devices/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          userId: String(userId),
+          token: fcmToken,
+          platform: Platform.OS.toUpperCase(),
+        }),
+      });
+      if (response.ok) console.log('[Notifications] Device deregistrato (isActive=false).');
+      else console.warn('[Notifications] Backend deregister error:', response.status);
+      return response.ok;
+    } catch (e) {
+      console.error('[Notifications] Errore rete deregister:', e);
+      return false;
+    }
+  };
+
+  const registerDeviceForNotifications = useCallback(
+    async (authToken: string, userId: string | number) => {
+      try {
+        const fcmToken = await requestPermissionAndGetToken();
+        if (!fcmToken) {
+          await AsyncStorage.setItem(STORAGE_KEY_NOTIFICATIONS, 'false');
+          setNotificationsEnabled(false);
+          return;
+        }
+        const success = await registerDeviceOnBackend(authToken, userId, fcmToken);
+        if (success) {
+          setNotificationsEnabled(true);
+          await AsyncStorage.setItem(STORAGE_KEY_NOTIFICATIONS, 'true');
+        }
+      } catch (e) {
+        console.error('[Notifications] Errore in registerDeviceForNotifications:', e);
+      }
+    },
+    [baseUrl],
+  );
+
+  const toggleNotifications = useCallback(
+    async (enable: boolean) => {
+      if (notificationsLoading || !token || !user) return;
+      setNotificationsLoading(true);
+      try {
+        if (enable) {
+          const { status } = await Notifications.getPermissionsAsync();
+          if (status === 'denied') {
+            Alert.alert(
+              'Notifiche disabilitate',
+              'Per ricevere notifiche, abilita i permessi nelle impostazioni del dispositivo.',
+              [
+                { text: 'Annulla', style: 'cancel' },
+                { text: 'Apri Impostazioni', onPress: () => Linking.openSettings() },
+              ],
+            );
+            return;
+          }
+          let fcmToken = fcmTokenRef.current;
+          if (!fcmToken) {
+            fcmToken = await requestPermissionAndGetToken();
+          } else {
+            // verifica permesso anche se abbiamo già il token
+            await requestPermissionAndGetToken();
+          }
+          if (!fcmToken) return;
+          const success = await registerDeviceOnBackend(token, user.id, fcmToken);
+          if (success) {
+            setNotificationsEnabled(true);
+            await AsyncStorage.setItem(STORAGE_KEY_NOTIFICATIONS, 'true');
+          }
+        } else {
+          let fcmToken = fcmTokenRef.current;
+          if (!fcmToken) {
+            fcmToken = await AsyncStorage.getItem(STORAGE_KEY_FCM_TOKEN);
+            if (fcmToken) fcmTokenRef.current = fcmToken;
+          }
+          if (!fcmToken) {
+            setNotificationsEnabled(false);
+            await AsyncStorage.setItem(STORAGE_KEY_NOTIFICATIONS, 'false');
+            return;
+          }
+          const success = await deregisterDeviceOnBackend(token, user.id, fcmToken);
+          if (success) {
+            setNotificationsEnabled(false);
+            await AsyncStorage.setItem(STORAGE_KEY_NOTIFICATIONS, 'false');
+          }
+        }
+      } catch (e) {
+        console.error('[Notifications] Errore in toggleNotifications:', e);
+      } finally {
+        setNotificationsLoading(false);
+      }
+    },
+    [token, user, notificationsLoading, baseUrl],
+  );
 
   useEffect(() => {
     const loadAuthData = async () => {
@@ -122,14 +336,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('auth_token', newToken);
       localStorage.setItem('auth_user', JSON.stringify(newUser));
     }
+    // Registra il device per le notifiche push dopo il login
+    if (Platform.OS !== 'web') {
+      registerDeviceForNotifications(newToken, newUser.id);
+    }
   };
 
   const performLogout = async () => {
+    // Deregistra il device prima di fare logout
+    if (token && user && Platform.OS !== 'web') {
+      const fcmToken = fcmTokenRef.current || (await AsyncStorage.getItem(STORAGE_KEY_FCM_TOKEN).catch(() => null));
+      if (fcmToken) {
+        await deregisterDeviceOnBackend(token, user.id, fcmToken).catch(e =>
+          console.error('[Notifications] Errore deregister al logout:', e),
+        );
+      }
+    }
     setToken(null);
     setUser(null);
+    setNotificationsEnabled(false);
+    fcmTokenRef.current = null;
     try {
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem(STORAGE_KEY_NOTIFICATIONS);
+      await AsyncStorage.removeItem(STORAGE_KEY_FCM_TOKEN);
       if (Platform.OS === 'web') {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
@@ -146,7 +377,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isLoading,
+        notificationsEnabled,
+        notificationsLoading,
+        login,
+        logout,
+        toggleNotifications,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

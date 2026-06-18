@@ -116,7 +116,7 @@ export function OfferDetails({ offer }: { offer: Offer }) {
               {offer.offerProducts.map((product, index) => (
                 <TouchableOpacity
                   key={product.productId}
-                  onPress={() => router.push({ pathname: "/product/[id]", params: { id: product.productId } })}
+                  onPress={() => router.push(`/product/${product.productId}` as any)}
                   className="flex-row items-center gap-4 bg-[#121a2e] border border-[#4cc9f033] rounded-3xl p-4 mb-3 active:opacity-90"
                 >
                   <ProductIcon index={index} />
@@ -149,7 +149,7 @@ export function OfferDetails({ offer }: { offer: Offer }) {
               {offer.menus.map((menu, index) => (
                 <TouchableOpacity
                   key={menu.id}
-                  onPress={() => router.push({ pathname: "/menu/[id]", params: { id: menu.id } })}
+                  onPress={() => router.push(`/menu/${menu.id}` as any)}
                   className="flex-row items-center gap-4 bg-[#121a2e] border border-[#5ce1d633] rounded-3xl p-4 mb-3 active:opacity-90"
                 >
                   <View className="w-10 h-10 rounded-[12px] bg-[#0f182e] border border-[#5ce1d644] items-center justify-center overflow-hidden">

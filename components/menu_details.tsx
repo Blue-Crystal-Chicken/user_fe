@@ -158,7 +158,7 @@ export function MenuDetails({ menu }: { menu: Menu }) {
           {menu.menuProducts.map((product, index) => (
             <TouchableOpacity
               key={product.productId}
-              onPress={() => router.push({ pathname: "/product/[id]", params: { id: product.productId } })}
+              onPress={() => router.push(`/product/${product.productId}` as any)}
               className="flex-row items-center gap-4 bg-[#121a2e] border border-[#4cc9f033] rounded-3xl p-4 mb-3 active:opacity-90"
             >
               <ProductIcon index={index} />
