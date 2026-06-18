@@ -22,7 +22,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo_bcc.jpg",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.giuseppe_tesse.blue_crystall_chicken"
     },
     "web": {
       "bundler": "metro",
@@ -44,6 +45,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e0039db6-9419-4a56-bac6-473c15f4c742"
+      }
     }
   }
 }
