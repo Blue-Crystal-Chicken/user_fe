@@ -56,6 +56,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ? process.env.EXPO_PUBLIC_API_URL_WEB
     : process.env.EXPO_PUBLIC_API_URL_MOBILE;
 
+  const notificationBaseUrl = Platform.OS === 'web'
+    ? process.env.EXPO_PUBLIC_NOTIFICATION_URL_WEB
+    : process.env.EXPO_PUBLIC_NOTIFICATION_URL_MOBILE;
+
   // Carica lo stato notifiche salvato
   useEffect(() => {
     const loadNotifState = async () => {
@@ -96,7 +100,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#4cc9f0',
-        sound: 'default',
       });
     }
 
@@ -118,9 +121,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userId: string | number,
     fcmToken: string,
   ): Promise<boolean> => {
-    if (!baseUrl) return false;
+    if (!notificationBaseUrl) return false;
     try {
-      const response = await fetch(`${baseUrl}/user-devices`, {
+      const response = await fetch(`${notificationBaseUrl}/user-devices`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,9 +150,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userId: string | number,
     fcmToken: string,
   ): Promise<boolean> => {
-    if (!baseUrl) return false;
+    if (!notificationBaseUrl) return false;
     try {
-      const response = await fetch(`${baseUrl}/user-devices/logout`, {
+      const response = await fetch(`${notificationBaseUrl}/user-devices/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,7 +191,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('[Notifications] Errore in registerDeviceForNotifications:', e);
       }
     },
-    [baseUrl],
+    [notificationBaseUrl],
   );
 
   const toggleNotifications = useCallback(
@@ -245,7 +248,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setNotificationsLoading(false);
       }
     },
-    [token, user, notificationsLoading, baseUrl],
+    [token, user, notificationsLoading, notificationBaseUrl],
   );
 
   useEffect(() => {

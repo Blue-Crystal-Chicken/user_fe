@@ -98,7 +98,6 @@ export function useNotifications({
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#4cc9f0',
-        sound: 'default',
       });
     }
 

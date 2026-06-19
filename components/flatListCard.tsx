@@ -46,21 +46,17 @@ export function FlatListCard({ menus }: { menus: Menu[] }) {
                         <View className="flex-1 p-4 justify-between">
                             <View>
                                 <View className="flex-row justify-between items-start">
-                                    <Text 
-                                        className="text-white font-semibold text-[17px] flex-1 pr-2 leading-5"
-                                        numberOfLines={2}
-                                        ellipsizeMode="tail"
-                                    >
-                                        {item.name}
+                                    <Text className="text-white">
+                                       {item.name}
                                     </Text>
-                                    <Text className="text-[#4cc9f0] font-semibold text-[17px] shrink-0">
+                                    <Text className="text-lg text-[#4cc9f0] font-semibold  shrink-0">
                                         €{item.price.toFixed(2)}
                                     </Text>
                                 </View>
 
                                 {item.description && (
                                     <Text 
-                                        className="text-[#8ab4e0] text-[13px] mt-2 leading-5"
+                                        className="text-[#8ab4e0] text-[13px] leading-5"
                                         numberOfLines={2}
                                         ellipsizeMode="tail"
                                     >
