@@ -1,33 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ImageBackground, Dimensions, Image, Platform } from 'react-native';
-
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Text, ImageBackground, Dimensions, Image, Platform, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/components/context/AuthContext';
 import StatusBadge from './status_badge';
-import { Location } from '@/type';
+import { LocationResponse } from '@/type';
 
 const { height } = Dimensions.get('window');
 const AVATAR_SIZE = 210;
 
 const Hero = ({ title, subtitle }: { title: string; subtitle: string }) => {
-  const [location, setLocation] = useState<Location[]>([]);
+  const router = useRouter();
+  const { selectedLocation, setSelectedLocation } = useAuth();
 
   const baseUrl = Platform.OS === 'web'
     ? process.env.EXPO_PUBLIC_API_URL_WEB
     : process.env.EXPO_PUBLIC_API_URL_MOBILE;
 
   useEffect(() => {
-    const fetchLocation = async () => {
-      try {
-        const response = await fetch(`${baseUrl}/api/locations/city/torino`);
-        const data: Location[] = await response.json();
-        if (data && data.length > 0) {
-          setLocation(data);
+    if (!selectedLocation) {
+      const fetchDefaultLocation = async () => {
+        try {
+          const response = await fetch(`${baseUrl}/api/locations`);
+          if (response.ok) {
+            const data: LocationResponse[] = await response.json();
+            if (data && data.length > 0) {
+              // Cerca "Torino" come default iniziale per retrocompatibilità, altrimenti prende il primo
+              const torino = data.find(l => l.city.toLowerCase() === 'torino');
+              setSelectedLocation(torino || data[0]);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching default location:", error);
         }
-      } catch (error) {
-        console.error("Error fetching location:", error);
-      }
-    };
-    fetchLocation();
-  }, []);
+      };
+      fetchDefaultLocation();
+    }
+  }, [selectedLocation, baseUrl, setSelectedLocation]);
 
   return (
     <View style={styles.container}>
@@ -52,8 +60,15 @@ const Hero = ({ title, subtitle }: { title: string; subtitle: string }) => {
             <Text style={styles.welcomeSpan}>Welcome to</Text>
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.subtitle}>{subtitle}</Text>
-            {location.length > 0 && (
-              <StatusBadge isOpen={location[0].isOpen} city={location[0].city} />
+            {selectedLocation && (
+              <TouchableOpacity
+                onPress={() => router.push('/other/locations')}
+                activeOpacity={0.7}
+                style={styles.badgeWrapper}
+              >
+                <StatusBadge isOpen={selectedLocation.isOpen} city={selectedLocation.city} />
+                <Text style={styles.addressText}>{selectedLocation.address}</Text>
+              </TouchableOpacity>
             )}
           </View>
         </View>
@@ -123,6 +138,18 @@ const styles = StyleSheet.create({
     fontSize: 16.5,
     marginTop: 6,
     opacity: 0.95,
+  },
+  badgeWrapper: {
+    marginTop: 10,
+    alignItems: 'flex-start',
+  },
+  addressText: {
+    color: '#8ab4e0',
+    fontSize: 12,
+    marginTop: 6,
+    marginLeft: 8,
+    opacity: 0.8,
+    fontWeight: '500',
   },
 });
 

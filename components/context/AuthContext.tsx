@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import { LocationResponse } from '@/type';
 
 // Configura il comportamento delle notifiche in foreground
 Notifications.setNotificationHandler({
@@ -28,6 +29,7 @@ interface User {
   gender?: string;
   birthday?: string;
   roles?: string[];
+  location?: LocationResponse;
 }
 
 interface AuthContextType {
@@ -39,6 +41,9 @@ interface AuthContextType {
   login: (token: string, user: User) => void;
   logout: () => void;
   toggleNotifications: (enable: boolean) => Promise<void>;
+  selectedLocation: LocationResponse | null;
+  setSelectedLocation: (location: LocationResponse | null) => void;
+  updateUserLocation: (locationId: number) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,6 +56,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const fcmTokenRef = useRef<string | null>(null);
   const router = useRouter();
+
+  const [selectedLocation, setSelectedLocationState] = useState<LocationResponse | null>(null);
+
+  const setSelectedLocation = useCallback(async (location: LocationResponse | null) => {
+    setSelectedLocationState(location);
+    if (location) {
+      await AsyncStorage.setItem('selected_location', JSON.stringify(location)).catch(e => console.error(e));
+    } else {
+      await AsyncStorage.removeItem('selected_location').catch(e => console.error(e));
+    }
+  }, []);
+
+  const updateUserLocation = useCallback(async (locationId: number): Promise<boolean> => {
+    if (!token || !user) return false;
+    try {
+      const response = await fetch(`${baseUrl}/api/users/v1/users/${user.id}/location/${locationId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const updatedUser = await response.json();
+        login(token, updatedUser);
+        return true;
+      } else {
+        const errorText = await response.text();
+        console.error('[AuthContext] Failed to update user location:', errorText);
+        return false;
+      }
+    } catch (e) {
+      console.error('[AuthContext] Error updating user location:', e);
+      return false;
+    }
+  }, [token, user]);
 
   const baseUrl = Platform.OS === 'web'
     ? process.env.EXPO_PUBLIC_API_URL_WEB
@@ -68,8 +109,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const savedToken = await AsyncStorage.getItem(STORAGE_KEY_FCM_TOKEN);
         if (saved !== null) setNotificationsEnabled(saved === 'true');
         if (savedToken) fcmTokenRef.current = savedToken;
+        
+        const storedLoc = await AsyncStorage.getItem('selected_location');
+        if (storedLoc) {
+          setSelectedLocationState(JSON.parse(storedLoc));
+        }
       } catch (e) {
-        console.error('[Notifications] Errore caricamento stato:', e);
+        console.error('[Notifications/Location] Errore caricamento stato:', e);
       }
     };
     loadNotifState();
@@ -290,6 +336,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (Platform.OS === 'web') {
                   localStorage.setItem('auth_user', JSON.stringify(result));
                 }
+                if (result.location) {
+                  setSelectedLocationState(result.location);
+                  AsyncStorage.setItem('selected_location', JSON.stringify(result.location)).catch(e => console.error(e));
+                }
                 success = true;
               } else if (response.status === 401 || response.status === 403) {
                 // Token invalid or expired - don't retry
@@ -338,6 +388,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (Platform.OS === 'web') {
       localStorage.setItem('auth_token', newToken);
       localStorage.setItem('auth_user', JSON.stringify(newUser));
+    }
+    if (newUser.location) {
+      setSelectedLocationState(newUser.location);
+      AsyncStorage.setItem('selected_location', JSON.stringify(newUser.location)).catch(e => console.error(e));
     }
     // Registra il device per le notifiche push dopo il login
     if (Platform.OS !== 'web') {
@@ -390,6 +444,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         toggleNotifications,
+        selectedLocation,
+        setSelectedLocation,
+        updateUserLocation,
       }}
     >
       {children}

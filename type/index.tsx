@@ -10,6 +10,7 @@ export interface User {
     role: string;
     createdAt: string;
     updatedAt: string;
+    location?: LocationResponse;
 }
 
 export interface UserLogin {
@@ -66,6 +67,19 @@ export interface Product {
 export interface Location{
     city: string;
     isOpen: boolean;
+}
+
+export interface LocationResponse {
+    id: number;
+    name: string;
+    address: string;
+    city: string;
+    phoneCode: string;
+    phoneNumber: string;
+    tables: number;
+    isOpen: boolean;
+    manuallyClosed: boolean;
+    status: string;
 }
 
 export interface MenuProduct {
