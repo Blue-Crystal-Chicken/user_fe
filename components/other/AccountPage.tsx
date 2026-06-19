@@ -2,6 +2,7 @@ import React from 'react';
 import { View, ScrollView, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { useRouter } from 'expo-router';
+import type { Href } from 'expo-router';
 import { ArrowLeft, User, CreditCard, MapPin, Package, LogOut, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '@/components/context/AuthContext';
 
@@ -10,8 +11,8 @@ export function AccountPage() {
   const { user, logout } = useAuth();
   const backButtonTop = (Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 48) + 12;
 
-  const menuItems = [
-    { title: 'Personal Information', icon: User, description: 'Update your name and email' },
+  const menuItems: { title: string; icon: React.ComponentType<any>; description: string; route?: Href }[] = [
+    { title: 'Personal Information', icon: User, description: 'Update your name and email', route: '/other/personal-info' as Href },
     { title: 'My Orders', icon: Package, description: 'Track and view past orders' },
     { title: 'Saved Addresses', icon: MapPin, description: 'Manage delivery locations' },
     { title: 'Payment Methods', icon: CreditCard, description: 'Manage your cards' },
@@ -58,6 +59,7 @@ export function AccountPage() {
           {menuItems.map((item, index) => (
             <TouchableOpacity 
               key={index}
+              onPress={() => item.route && router.push(item.route)}
               className="bg-[#121a2e] border border-white/5 rounded-3xl p-5 flex-row items-center gap-4"
             >
               <View className="w-12 h-12 rounded-2xl bg-[#1e2f5a] items-center justify-center">

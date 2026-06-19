@@ -23,7 +23,8 @@
         "foregroundImage": "./assets/images/logo_bcc.jpg",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.giuseppe_tesse.blue_crystall_chicken"
+      "googleServicesFile": "./google-services.json",
+      "package": "com.giuseppe_matteo.bcc"
     },
     "web": {
       "bundler": "metro",

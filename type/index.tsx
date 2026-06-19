@@ -17,6 +17,15 @@ export interface UserLogin {
     password: string;
 }
 
+export interface UserUpdateRequest {
+    name: string;
+    surname: string;
+    email: string;
+    phone: string;
+    gender: string;
+    birthday: string;
+}
+
 export interface Category{
     id: string;
     name: string;
