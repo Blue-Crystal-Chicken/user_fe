@@ -52,7 +52,7 @@ useEffect(() => {
         <View className="items-center gap-4">
           <Image source={LOGO[colorScheme ?? 'light']} style={IMAGE_STYLE} className="rounded-2xl" />
           <Text className="text-3xl font-bold text-foreground">Blue Crystal Chicken</Text>
-          <Text className="text-muted-foreground text-center">Your favorite kitchen management app</Text>
+          <Text className="text-muted-foreground text-center">Your favorite chicken management app</Text>
         </View>
         <Card className="w-full max-w-sm">
           <CardHeader>

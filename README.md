@@ -1,6 +1,6 @@
 # BCC User Frontend - Expo Mobile Application
 
-Questo è il frontend per i clienti del progetto **Blue Crystal Kitchen (BCC)**, sviluppato in **React Native** utilizzando **Expo** ed **Expo Router**.
+Questo è il frontend per i clienti del progetto **Blue Crystal Chicken (BCC)**, sviluppato in **React Native** utilizzando **Expo** ed **Expo Router**.
 L'applicazione è stilizzata con **Tailwind CSS** (via **NativeWind**) e utilizza componenti di **React Native Reusables**.
 
 ---
