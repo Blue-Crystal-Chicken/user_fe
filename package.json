@@ -3,10 +3,14 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "dev": "expo start -c",
-    "android": "expo start -c --android",
-    "ios": "expo start -c --ios",
-    "web": "expo start -c --web",
+    "predev": "node scripts/set-local-ip.js",
+    "dev": "expo start --port 8082",
+    "preandroid": "node scripts/set-local-ip.js",
+    "android": "expo start --android",
+    "preios": "node scripts/set-local-ip.js",
+    "ios": "expo start --ios",
+    "preweb": "node scripts/set-local-ip.js",
+    "web": "expo start --web",
     "clean": "rm -rf .expo node_modules"
   },
   "dependencies": {
@@ -53,6 +57,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
+    "@expo/ngrok": "4.1.0",
     "@types/react": "~19.2.10",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
