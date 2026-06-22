@@ -1,39 +1,108 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  ScrollView,
   TouchableOpacity,
   Platform,
   StatusBar,
   ActivityIndicator,
-  StyleSheet,
-  Dimensions,
 } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, MapPin, Home, Briefcase, Truck, Navigation, Save } from 'lucide-react-native';
+import { ArrowLeft, Home, Briefcase, Truck, Navigation, Save } from 'lucide-react-native';
 import { useAuth } from '@/components/context/AuthContext';
-import * as Location from 'expo-location';
-
-// Dynamically import react-native-maps to prevent crashes on Expo Web
-let MapView: any = null;
-let Marker: any = null;
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+// Dynamically require react-native-webview only on native to prevent web crashes
+let WebView: any = null;
 if (Platform.OS !== 'web') {
   try {
-    const RNMaps = require('react-native-maps');
-    MapView = RNMaps.default;
-    Marker = RNMaps.Marker;
+    WebView = require('react-native-webview').WebView;
   } catch (e) {
-    console.warn('[SavedAddresses] react-native-maps could not be required:', e);
+    console.warn('[SavedAddresses] react-native-webview could not be required:', e);
   }
 }
 
-// Default coordinates centered on Rome, Italy
+// Dynamically require expo-location
+let Location: any = null;
+try {
+  Location = require('expo-location');
+} catch (e) {
+  console.warn('[SavedAddresses] expo-location could not be required:', e);
+}
+
 const DEFAULT_LAT = 41.9028;
 const DEFAULT_LNG = 12.4964;
+
+const getLeafletHtml = (lat: number, lng: number) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <style>
+        body, html, #map {
+          height: 100%;
+          margin: 0;
+          padding: 0;
+          background-color: #0a0f1c;
+        }
+        .leaflet-container {
+          background: #0a0f1c !important;
+        }
+        .leaflet-tile {
+          filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%) !important;
+        }
+        .leaflet-control-attribution {
+          display: none !important;
+        }
+        .leaflet-marker-icon {
+          filter: drop-shadow(0px 0px 8px #4cc9f0);
+        }
+      </style>
+    </head>
+    <body>
+      <div id="map"></div>
+      <script>
+        var map = L.map('map', { zoomControl: false }).setView([${lat}, ${lng}], 16);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(map);
+
+        var marker = L.marker([${lat}, ${lng}], { draggable: true }).addTo(map);
+
+        function sendLocation(lat, lng) {
+          var msg = JSON.stringify({
+            type: 'location_change',
+            latitude: lat,
+            longitude: lng
+          });
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(msg);
+          } else {
+            window.parent.postMessage(msg, '*');
+          }
+        }
+
+        marker.on('dragend', function(e) {
+          var pos = marker.getLatLng();
+          sendLocation(pos.lat, pos.lng);
+        });
+
+        map.on('click', function(e) {
+          marker.setLatLng(e.latlng);
+          sendLocation(e.latlng.lat, e.latlng.lng);
+        });
+      </script>
+    </body>
+    </html>
+  `;
+};
 
 export function SavedAddressesPage() {
   const router = useRouter();
@@ -43,7 +112,6 @@ export function SavedAddressesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<string | null>(null);
 
-  // Address form fields
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
@@ -51,12 +119,9 @@ export function SavedAddressesPage() {
   const [country, setCountry] = useState('');
   const [addressType, setAddressType] = useState<'HOME' | 'WORK' | 'DELIVERY'>('DELIVERY');
 
-  // Map region state
   const [region, setRegion] = useState({
     latitude: DEFAULT_LAT,
     longitude: DEFAULT_LNG,
-    latitudeDelta: 0.005,
-    longitudeDelta: 0.005,
   });
 
   const backButtonTop = (Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 48) + 12;
@@ -65,12 +130,25 @@ export function SavedAddressesPage() {
     ? process.env.EXPO_PUBLIC_API_URL_WEB
     : process.env.EXPO_PUBLIC_API_URL_MOBILE;
 
-  // Initialize and load address
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handleWebMsg = (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'location_change') {
+            handleLocationChange(data.latitude, data.longitude);
+          }
+        } catch (e) {}
+      };
+      window.addEventListener('message', handleWebMsg);
+      return () => window.removeEventListener('message', handleWebMsg);
+    }
+  }, []);
+
   useEffect(() => {
     const initializeLocation = async () => {
       try {
         if (user && user.address) {
-          // 1. Popola i campi con l'indirizzo esistente
           const addr = user.address;
           setStreet(addr.street || '');
           setCity(addr.city || '');
@@ -79,28 +157,26 @@ export function SavedAddressesPage() {
           setCountry(addr.country || '');
           setAddressType((addr.type as 'HOME' | 'WORK' | 'DELIVERY') || 'DELIVERY');
 
-          // 2. Tenta di geocodificare l'indirizzo esistente per centrare la mappa
-          try {
-            const addressString = `${addr.street}, ${addr.city}, ${addr.country}`;
-            const geocodeResult = await Location.geocodeAsync(addressString);
-            if (geocodeResult && geocodeResult.length > 0) {
-              setRegion({
-                latitude: geocodeResult[0].latitude,
-                longitude: geocodeResult[0].longitude,
-                latitudeDelta: 0.005,
-                longitudeDelta: 0.005,
-              });
+          if (Location) {
+            try {
+              const addressString = `${addr.street}, ${addr.city}, ${addr.country}`;
+              const geocodeResult = await Location.geocodeAsync(addressString);
+              if (geocodeResult && geocodeResult.length > 0) {
+                setRegion({
+                  latitude: geocodeResult[0].latitude,
+                  longitude: geocodeResult[0].longitude,
+                });
+              }
+            } catch (err) {
+              console.warn(err);
             }
-          } catch (err) {
-            console.warn('[SavedAddresses] Geocoding existing address failed:', err);
           }
           setIsLoading(false);
         } else {
-          // Se non ha un indirizzo salvato, richiedi permessi e geolocalizza
           await requestAndGetLocation();
         }
       } catch (err) {
-        console.error('[SavedAddresses] Initialization error:', err);
+        console.error(err);
         setIsLoading(false);
       }
     };
@@ -108,8 +184,12 @@ export function SavedAddressesPage() {
     initializeLocation();
   }, [user]);
 
-  // Request location and reverse-geocode
   const requestAndGetLocation = async () => {
+    if (!Location) {
+      setIsLoading(false);
+      alert("La geolocalizzazione automatica non è disponibile perché i moduli nativi (expo-location) non sono compilati in questa build.\n");
+      return;
+    }
     setIsLoading(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -126,8 +206,6 @@ export function SavedAddressesPage() {
         setRegion({
           latitude: lat,
           longitude: lng,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
         });
 
         await reverseGeocode(lat, lng);
@@ -135,20 +213,19 @@ export function SavedAddressesPage() {
         alert("Permesso di geolocalizzazione negato. Inserisci l'indirizzo manualmente.");
       }
     } catch (err) {
-      console.error('[SavedAddresses] Error getting current location:', err);
+      console.error(err);
       alert("Errore nel recupero della posizione GPS.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Reverse geocode lat/lng to details
   const reverseGeocode = async (latitude: number, longitude: number) => {
+    if (!Location) return;
     try {
       const response = await Location.reverseGeocodeAsync({ latitude, longitude });
       if (response && response.length > 0) {
         const item = response[0];
-        // Costruisci via e numero civico
         const streetName = item.street || item.name || '';
         const streetNumber = item.streetNumber ? `, ${item.streetNumber}` : '';
         setStreet(`${streetName}${streetNumber}`);
@@ -158,17 +235,26 @@ export function SavedAddressesPage() {
         setCountry(item.country || 'Italia');
       }
     } catch (err) {
-      console.error('[SavedAddresses] Reverse geocoding failed:', err);
+      console.error(err);
     }
   };
 
-  // Handle map interaction (drag or tap)
   const handleLocationChange = async (latitude: number, longitude: number) => {
-    setRegion(prev => ({ ...prev, latitude, longitude }));
+    setRegion({ latitude, longitude });
     await reverseGeocode(latitude, longitude);
   };
 
-  // Submit address update to backend
+  const handleWebViewMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'location_change') {
+        handleLocationChange(data.latitude, data.longitude);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleSave = async () => {
     if (!street || !city || !zipCode || !country) {
       alert('Compila tutti i campi obbligatori (Via, Città, CAP, Paese).');
@@ -210,7 +296,6 @@ export function SavedAddressesPage() {
 
       if (response.ok) {
         const updatedUser = await response.json();
-        // Aggiorna context
         login(token, updatedUser);
         router.back();
       } else {
@@ -218,7 +303,7 @@ export function SavedAddressesPage() {
         alert(`Errore di salvataggio: ${errText}`);
       }
     } catch (e) {
-      console.error('[SavedAddresses] Network save error:', e);
+      console.error(e);
       alert('Errore di connessione. Controlla la rete.');
     } finally {
       setIsSaving(false);
@@ -229,7 +314,6 @@ export function SavedAddressesPage() {
     <View className="flex-1 bg-[#0a0f1c]">
       <StatusBar barStyle="light-content" />
 
-      {/* Header */}
       <View className="relative h-40 justify-end pb-6 px-6 bg-[#0a0f1c]">
         <TouchableOpacity
           onPress={() => router.back()}
@@ -247,53 +331,51 @@ export function SavedAddressesPage() {
           <Text className="text-[#8ab4e0] mt-4 text-sm font-medium">Recupero posizione in corso...</Text>
         </View>
       ) : (
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-          {/* Map Section */}
+        <KeyboardAwareScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          enableOnAndroid={true}
+          extraScrollHeight={100}
+          keyboardShouldPersistTaps="handled"
+        >
+          {!Location && (
+            <View className="mx-6 mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl">
+              <Text className="text-yellow-500 text-xs font-semibold uppercase mb-1">Geolocalizzazione disabilitata</Text>
+              <Text className="text-white text-xs leading-4">
+                La geolocalizzazione automatica del GPS non è supportata su questa build. Inserisci il tuo indirizzo di consegna manualmente nei campi sottostanti.
+              </Text>
+            </View>
+          )}
+
           <View className="px-6 mb-6">
             <Text className="text-[#67b8e0] text-xs font-semibold uppercase tracking-[1.5px] mb-3 ml-1">
               LA TUA POSIZIONE SULLA MAPPA
             </Text>
 
             <View className="h-64 rounded-[32px] overflow-hidden border border-white/10 bg-[#121a2e]">
-              {Platform.OS === 'web' || !MapView ? (
-                // Web Fallback or Map Mock
-                <View className="flex-1 items-center justify-center p-6 bg-[#121a2e]">
-                  <View className="w-14 h-14 bg-[#4cc9f01a] rounded-full items-center justify-center border border-[#4cc9f044] mb-3">
-                    <MapPin size={28} color="#4cc9f0" />
-                  </View>
-                  <Text className="text-white font-semibold text-base mb-1">Mappa simulata per Web</Text>
-                  <Text className="text-[#8ab4e0] text-center text-xs px-4 mb-4">
-                    Latitude: {region.latitude.toFixed(6)} | Longitude: {region.longitude.toFixed(6)}
-                  </Text>
-                  <Button
-                    variant="outline"
-                    className="border-white/10"
-                    onPress={requestAndGetLocation}
-                  >
-                    <Navigation size={14} color="#4cc9f0" className="mr-1.5" />
-                    <Text className="text-white text-xs font-semibold">Usa Posizione GPS Browser</Text>
-                  </Button>
-                </View>
+              {Platform.OS === 'web' ? (
+                React.createElement('iframe', {
+                  srcDoc: getLeafletHtml(region.latitude, region.longitude),
+                  style: { border: 'none', width: '100%', height: '100%', borderRadius: 24 }
+                })
+              ) : WebView ? (
+                <WebView
+                  originWhitelist={['*']}
+                  source={{ html: getLeafletHtml(region.latitude, region.longitude) }}
+                  style={{ flex: 1, backgroundColor: '#0a0f1c' }}
+                  onMessage={handleWebViewMessage}
+                  javaScriptEnabled={true}
+                  domStorageEnabled={true}
+                />
               ) : (
-                // Native MapView
-                <MapView
-                  style={StyleSheet.absoluteFillObject}
-                  initialRegion={region}
-                  region={region}
-                  onPress={(e: any) => handleLocationChange(e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude)}
-                  provider="google"
-                >
-                  <Marker
-                    coordinate={{ latitude: region.latitude, longitude: region.longitude }}
-                    draggable
-                    onDragEnd={(e: any) => handleLocationChange(e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude)}
-                    pinColor="#4cc9f0"
-                  />
-                </MapView>
+                <View className="flex-1 justify-center items-center p-6 bg-[#121a2e]">
+                  <Text className="text-[#8ab4e0] text-center text-sm font-semibold mb-2">
+                    Servizi Mappa Non Disponibili
+                  </Text>
+                </View>
               )}
             </View>
 
-            {/* GPS Fetch Button for mobile */}
             {Platform.OS !== 'web' && (
               <TouchableOpacity
                 onPress={requestAndGetLocation}
@@ -305,13 +387,11 @@ export function SavedAddressesPage() {
             )}
           </View>
 
-          {/* Form Section */}
           <View className="px-6 gap-5 mb-12">
             <Text className="text-[#67b8e0] text-xs font-semibold uppercase tracking-[1.5px] ml-1">
               DETTAGLI INDIRIZZO
             </Text>
 
-            {/* Address Type Selector */}
             <View className="gap-2">
               <Label>Tipo Indirizzo</Label>
               <View className="flex-row gap-3">
@@ -353,7 +433,6 @@ export function SavedAddressesPage() {
               </View>
             </View>
 
-            {/* Street */}
             <View className="gap-2">
               <Label>Via / Piazza (e Civico) *</Label>
               <Input
@@ -364,7 +443,6 @@ export function SavedAddressesPage() {
               />
             </View>
 
-            {/* City & CAP */}
             <View className="flex-row gap-4">
               <View className="flex-1 gap-2">
                 <Label>Città *</Label>
@@ -387,7 +465,6 @@ export function SavedAddressesPage() {
               </View>
             </View>
 
-            {/* State & Country */}
             <View className="flex-row gap-4">
               <View className="flex-1 gap-2">
                 <Label>Provincia</Label>
@@ -409,7 +486,6 @@ export function SavedAddressesPage() {
               </View>
             </View>
 
-            {/* Save Button */}
             <View className="mt-4">
               <Button
                 className={`w-full h-14 rounded-2xl flex-row justify-center items-center gap-2 bg-[#4cc9f0] ${
@@ -429,7 +505,7 @@ export function SavedAddressesPage() {
               </Button>
             </View>
           </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       )}
     </View>
   );

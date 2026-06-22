@@ -23,6 +23,7 @@
         "foregroundImage": "./assets/images/logo_bcc.jpg",
         "backgroundColor": "#ffffff"
       },
+      "softwareKeyboardLayoutMode": "pan",
       "googleServicesFile": "./google-services.json",
       "package": "com.giuseppe_matteo.bcc"
     },
