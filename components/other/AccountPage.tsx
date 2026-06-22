@@ -14,7 +14,7 @@ export function AccountPage() {
   const menuItems: { title: string; icon: React.ComponentType<any>; description: string; route?: Href }[] = [
     { title: 'Personal Information', icon: User, description: 'Update your name and email', route: '/other/personal-info' as Href },
     { title: 'My Orders', icon: Package, description: 'Track and view past orders', route: '/other/orders' as Href },
-    { title: 'Saved Addresses', icon: MapPin, description: 'Manage delivery locations' },
+    { title: 'Saved Addresses', icon: MapPin, description: 'Manage delivery locations', route: '/other/saved-addresses' as Href },
     { title: 'Payment Methods', icon: CreditCard, description: 'Manage your cards' },
   ];
 

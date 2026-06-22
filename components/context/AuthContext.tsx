@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { LocationResponse } from '@/type';
+import { LocationResponse, AddressResponse } from '@/type';
 
 // Configura il comportamento delle notifiche in foreground
 Notifications.setNotificationHandler({
@@ -30,6 +30,7 @@ interface User {
   birthday?: string;
   roles?: string[];
   location?: LocationResponse;
+  address?: AddressResponse;
 }
 
 interface AuthContextType {

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, User, Save } from 'lucide-react-native';
 import { useAuth } from '@/components/context/AuthContext';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -126,7 +127,13 @@ export function PersonalInfoPage() {
 
     return (
         <View className="flex-1 bg-[#0a0f1c]">
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            <KeyboardAwareScrollView
+                className="flex-1"
+                showsVerticalScrollIndicator={false}
+                enableOnAndroid={true}
+                extraScrollHeight={100}
+                keyboardShouldPersistTaps="handled"
+            >
 
                 {/* Header */}
                 <View className="relative h-40 justify-end pb-6 px-6 bg-[#0a0f1c]">
@@ -383,7 +390,7 @@ export function PersonalInfoPage() {
                         </Button>
                     </View>
                 </View>
-            </ScrollView>
+            </KeyboardAwareScrollView>
         </View>
     );
 }

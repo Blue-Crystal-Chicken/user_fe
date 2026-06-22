@@ -7,6 +7,9 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import { AuthProvider } from '@/components/context/AuthContext';
+import { LogBox } from 'react-native';
+
+LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 
 export {
   // Catch any errors thrown by the Layout component.

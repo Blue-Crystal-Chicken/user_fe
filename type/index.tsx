@@ -1,3 +1,22 @@
+export interface AddressRequest {
+    type: string;
+    street: string;
+    city: string;
+    state?: string;
+    zipCode: string;
+    country: string;
+}
+
+export interface AddressResponse {
+    id: number;
+    type: string;
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+}
+
 export interface User {
     id: string;
     name: string;
@@ -11,6 +30,7 @@ export interface User {
     createdAt: string;
     updatedAt: string;
     location?: LocationResponse;
+    address?: AddressResponse;
 }
 
 export interface UserLogin {
@@ -25,6 +45,7 @@ export interface UserUpdateRequest {
     phone: string;
     gender: string;
     birthday: string;
+    address?: AddressRequest;
 }
 
 export interface Category{

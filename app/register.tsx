@@ -1,14 +1,18 @@
 import Register from '@/components/register';
-import { Stack, router } from 'expo-router';
-import { View, TouchableOpacity } from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
-import { Icon } from '@/components/ui/icon';
+import { Stack } from 'expo-router';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function RegisterScreen() {
   return (
-    <View className="flex-1 items-center justify-center p-4 bg-background">
+    <KeyboardAwareScrollView
+      contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 16 }}
+      className="bg-[#0a0f1c]"
+      enableOnAndroid={true}
+      extraScrollHeight={50}
+      keyboardShouldPersistTaps="handled"
+    >
       <Stack.Screen options={{ title: 'Register' }} />
       <Register />
-    </View>
+    </KeyboardAwareScrollView>
   );
 }

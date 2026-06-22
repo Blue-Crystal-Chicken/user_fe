@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "861802909482",
+    "project_id": "blue-crystal-chicken",
+    "storage_bucket": "blue-crystal-chicken.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:861802909482:android:d253f21965440c37319853",
+        "android_client_info": {
+          "package_name": "com.giuseppe_matteo.bcc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTTbPnXvVCnoPoyds2ju5kTEPxFFgV29s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
