@@ -15,10 +15,10 @@ pipeline {
             }
         }
 
-        stage('Installazione Dipendenze') {
+       stage('Installazione Dipendenze') {
             steps {
                 echo '=== Installazione dipendenze Frontend (Expo/React Native) ==='
-                sh "docker run --rm -v bcc_jenkins_data:/var/jenkins_home -w ${WORKSPACE} node:20-alpine sh -c 'corepack enable && pnpm install --frozen-lockfile'"
+                sh "docker run --rm -v bcc_jenkins_data:/var/jenkins_home -w \"${WORKSPACE}\" node:22-alpine sh -c 'corepack enable && pnpm install --frozen-lockfile'"
             }
         }
     }
