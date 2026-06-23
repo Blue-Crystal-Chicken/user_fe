@@ -93,8 +93,7 @@ export interface Location{
 export interface LocationResponse {
     id: number;
     name: string;
-    address: string;
-    city: string;
+    address: AddressResponse;
     phoneCode: string;
     phoneNumber: string;
     tables: number;

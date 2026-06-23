@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "predev": "node scripts/set-local-ip.js",
-    "dev": "expo start --port 8082 --dev-client",
-    "dev:clear": "expo start --clear --port 8082 --dev-client",
+    "dev": "expo start --host lan --port 8082 --dev-client",
+    "dev:clear": "expo start --clear --host lan --port 8082 --dev-client",
     "preandroid": "node scripts/set-local-ip.js",
     "android": "expo run:android",
     "preios": "node scripts/set-local-ip.js",

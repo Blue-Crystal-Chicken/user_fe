@@ -25,7 +25,7 @@ const Hero = ({ title, subtitle }: { title: string; subtitle: string }) => {
             const data: LocationResponse[] = await response.json();
             if (data && data.length > 0) {
               // Cerca "Torino" come default iniziale per retrocompatibilità, altrimenti prende il primo
-              const torino = data.find(l => l.city.toLowerCase() === 'torino');
+              const torino = data.find(l => l && l.address && l.address.city && l.address.city.toLowerCase() === 'torino');
               setSelectedLocation(torino || data[0]);
             }
           }
@@ -66,8 +66,8 @@ const Hero = ({ title, subtitle }: { title: string; subtitle: string }) => {
                 activeOpacity={0.7}
                 style={styles.badgeWrapper}
               >
-                <StatusBadge isOpen={selectedLocation.isOpen} city={selectedLocation.city} />
-                <Text style={styles.addressText}>{selectedLocation.address}</Text>
+                <StatusBadge isOpen={selectedLocation.isOpen} city={selectedLocation.address?.city} />
+                <Text style={styles.addressText}>{selectedLocation.address?.street}</Text>
               </TouchableOpacity>
             )}
           </View>

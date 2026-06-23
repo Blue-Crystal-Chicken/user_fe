@@ -61,20 +61,26 @@ export function LocationsPage() {
 
   // Filtra per città, raggruppa e ordina per indirizzo
   const groupedLocations = useMemo(() => {
-    const filtered = locations.filter(loc =>
-      loc.city.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filtered = locations.filter(loc => {
+      const city = loc && loc.address && loc.address.city;
+      return city && city.toLowerCase().includes((searchQuery || '').toLowerCase());
+    });
 
     const groups: { [key: string]: LocationResponse[] } = {};
     filtered.forEach(loc => {
-      if (!groups[loc.city]) {
-        groups[loc.city] = [];
+      const city = loc.address?.city || '';
+      if (!groups[city]) {
+        groups[city] = [];
       }
-      groups[loc.city].push(loc);
+      groups[city].push(loc);
     });
 
     Object.keys(groups).forEach(city => {
-      groups[city].sort((a, b) => a.address.localeCompare(b.address));
+      groups[city].sort((a, b) => {
+        const addrA = a.address?.street || '';
+        const addrB = b.address?.street || '';
+        return addrA.localeCompare(addrB);
+      });
     });
 
     return Object.keys(groups)
@@ -193,7 +199,7 @@ export function LocationsPage() {
                           
                           {/* Indirizzo in grigio piccolo */}
                           <Text className="text-[#8ab4e0] text-sm leading-5">
-                            {item.address}
+                            {item.address?.street}
                           </Text>
                         </View>
 
